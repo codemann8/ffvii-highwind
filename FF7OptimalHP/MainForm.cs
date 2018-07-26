@@ -69,16 +69,31 @@ namespace FF7OptimalHP
 
         private void LoadDefaultTree()
         {
+            stsStatus.BackColor = Color.Coral;
+
             string fileName = String.Format("{0}\\FFVIICache\\{1}.hpmp", AppDomain.CurrentDomain.BaseDirectory, c.Character.GetFilenamePrefix());
 
             if (File.Exists(fileName))
             {
+                lblStatus.Text = "Loading...";
+                Application.DoEvents();
+
                 c.ImportTree(fileName);
             }
             else
             {
+                lblStatus.Text = "Building...";
+                Application.DoEvents();
+
                 c.Run();
+
+                lblStatus.Text = "Trimming...";
+                Application.DoEvents();
+
                 c.RemoveSubPars();
+
+                lblStatus.Text = "Saving...";
+                Application.DoEvents();
 
                 c.ExportTree(fileName);
             }
@@ -103,12 +118,18 @@ namespace FF7OptimalHP
                 value /= 10000;
                 byte level = (byte)value;
 
+                lblStatus.Text = "Setting...";
+                Application.DoEvents();
+
                 SetMemory(level, hp, mp);
             }
 
             c.FindMinMaxPath();
 
             RefreshTree();
+
+            lblStatus.Text = "Idle";
+            stsStatus.BackColor = SystemColors.Control;
         }
 
         private void SetMemory(byte level, ushort hp, ushort mp, bool save = false)
@@ -200,17 +221,26 @@ namespace FF7OptimalHP
 
         private void btnClear_Click(object sender, EventArgs e)
         {
+            stsStatus.BackColor = Color.Coral;
+            lblStatus.Text = "Resetting...";
+            Application.DoEvents();
+
             SetMemory(1, 0, 0);
 
             c.SelectedNode = c.RootNode;
 
             LoadDefaultTree();
 
-            grpCharacters.Enabled = true;
+            lblStatus.Text = "Idle";
+            stsStatus.BackColor = SystemColors.Control;
         }
 
         private void btnSet_Click(object sender, EventArgs e)
         {
+            stsStatus.BackColor = Color.Coral;
+            lblStatus.Text = "Setting...";
+            Application.DoEvents();
+
             byte level;
             ushort hp, mp;
             if (Byte.TryParse(cboLevel.Text, out level) && level > 0 && UInt16.TryParse(txtHP.Text, out hp) && hp > 0 && UInt16.TryParse(txtMP.Text, out mp) && mp > 0)
@@ -225,6 +255,9 @@ namespace FF7OptimalHP
 
                 RefreshTree();
             }
+
+            lblStatus.Text = "Idle";
+            stsStatus.BackColor = SystemColors.Control;
         }
     }
 }
