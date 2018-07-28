@@ -216,6 +216,8 @@ namespace FF7OptimalHP
                 LoadDefaultTree();
 
                 treePath.Enabled = true;
+                btnClear.Enabled = true;
+                btnSet.Enabled = true;
             }
         }
 
@@ -258,6 +260,251 @@ namespace FF7OptimalHP
 
             lblStatus.Text = "Idle";
             stsStatus.BackColor = SystemColors.Control;
+        }
+
+        private void btnSimulate_Click(object sender, EventArgs e)
+        {
+            int numberOfSimulations = 10000;
+            int countTotalResets = 0, minResets = 9999, maxResets = 0;
+
+            for (int i = 0; i < numberOfSimulations; i++)
+            {
+                int resets = SimulateMaxSafeOnly();
+                //int resets = SimulateMaxBetterSafe();
+                countTotalResets += resets;
+                minResets = Math.Min(minResets, resets);
+                maxResets = Math.Max(maxResets, resets);
+            }
+
+            MessageBox.Show(String.Format("{0} simulations, average {1:0.00} resets, range {2}-{3}", numberOfSimulations, countTotalResets / (double)numberOfSimulations, minResets, maxResets));
+        }
+
+        public int SimulateMaxBetterSafe()
+        {
+            int countResets = 0;
+
+            Node current = c.RootNode;
+
+            string output = String.Format("Level {0} ({1}/{2})", current.Level, current.HP, current.MP);
+
+            bool shouldPrintLevel = false;
+
+            while (current.Level < Controller.MAX_LEVEL)
+            {
+                bool valueIsSafe = false;
+
+                int countResetsLevel = 0, rngIdx = 1;
+
+                do
+                {
+                    if (current.Level == c.Character.SafetyLevel)
+                    {
+                        shouldPrintLevel = true;
+                    }
+
+                    //Calculating next level's possible values
+                    HPMPGradientBase table = c.Character.GetTable((byte)(current.Level + 1));
+
+                    short hpDiffBase = (short)((short)(100 * (table.HP_BASE + (current.Level) * table.HP_GRADIENT) / current.HP) - 100),
+                        mpDiffBase = (short)((short)(100 * (table.MP_BASE + (short)((current.Level) * table.MP_GRADIENT / 10)) / current.MP) - 100);
+
+                    ushort[] hps = new ushort[Controller.RNG_LIST.GetLength(0)],
+                        mps = new ushort[Controller.RNG_LIST.GetLength(1)];
+
+                    for (int h = 0; h < hps.Length; h++)
+                    {
+                        hps[h] = (ushort)Math.Min(current.HP + (ushort)(table.HP_GRADIENT * Controller.HP_GAIN[Math.Min(Math.Max((int)((h + 1) + hpDiffBase), 0), 11)] / 100), 9999);
+                    }
+
+                    for (int m = 0; m < mps.Length; m++)
+                    {
+                        mps[m] = (ushort)Math.Min(current.MP + (ushort)((((ushort)((current.Level + 1) * table.MP_GRADIENT / 10) - (ushort)(current.Level * table.MP_GRADIENT / 10)) * Controller.MP_GAIN[Math.Min(Math.Max((int)((m + 1) + mpDiffBase), 0), 11)]) / 100), 999);
+                    }
+
+                    //Randomly choosing the next level value
+                    System.Security.Cryptography.RNGCryptoServiceProvider provider = new System.Security.Cryptography.RNGCryptoServiceProvider();
+                    byte[] rs = new byte[4];
+                    provider.GetBytes(rs);
+                    int r = rs[0];
+                    rngIdx = 1;
+                    while (r > 0)
+                    {
+                        r -= Controller.RNG_LIST[(rngIdx - 1) / 8, (rngIdx - 1) % 8];
+
+                        if (r >= 0)
+                        {
+                            rngIdx++;
+                        }
+                    }
+                    rngIdx--;
+
+                    while (Controller.RNG_LIST[rngIdx / 8, rngIdx % 8] == 0)
+                    {
+                        rngIdx++;
+                    }
+
+                    //Check if chosen value is safe
+                    Node tempCurrent = current;
+
+                    foreach (Node n in current.ChildNodes)
+                    {
+                        if (n.HP == hps[rngIdx / 8] && n.MP == mps[rngIdx % 8])
+                        {
+                            valueIsSafe = true;
+                            tempCurrent = n;
+                            break;
+                        }
+                    }
+
+                    //If it is safe, would it be advantageous to roll the dice for another value?
+                    if (valueIsSafe)
+                    {
+                        //MAKE MODS BELOW
+                        //Calculate a heuristic value for the node in question
+                        //double value = (current.MaxPath.Resets - tempCurrent.MaxPath.Resets) + (current.MinPath.Resets - tempCurrent.MinPath.Resets);
+                        double value = (current.MinPath.Resets - tempCurrent.MinPath.Resets);
+
+                        //Item4 is the number of times out of 256 that this will hit, (256 / x) - 1 represents the probable number of resets needed to hit this
+                        //value -= ((256.0 / tempCurrent.FindParent(current).Item4) - 1);
+
+                        //Loop thru all possible safe values and compare heuristic values, tally up the probability of a better value hitting
+                        int prob = 0;
+                        foreach (Node n in current.ChildNodes)
+                        {
+                            double diffMax = current.MaxPath.Resets - n.MaxPath.Resets, diffMin = current.MinPath.Resets - n.MinPath.Resets;
+                            if (diffMin - ((256.0 / n.FindParent(current).Item4) - 1) > value)
+                            {
+                                prob += n.FindParent(current).Item4;
+                                break;
+                            }
+                        }
+
+                        //this is the condition that will force the routine to try for a new value at the same level
+                        if (prob > 31)
+                        //MAKE MODS ABOVE
+                        {
+                            valueIsSafe = false;
+                        }
+                    }
+
+                    if (!valueIsSafe)
+                    {
+                        countResetsLevel++;
+                    }
+                    else
+                    {
+                        current = tempCurrent;
+                    }
+                }
+                while (!valueIsSafe);
+
+                if (shouldPrintLevel)
+                {
+                    output += String.Format("\nLevel {0} ({1}/{2}) ({3}&{4}) - {5} resets", current.Level, current.HP, current.MP, rngIdx / 8 + 1, rngIdx % 8 + 1, countResetsLevel);
+                }
+
+                countResets += countResetsLevel;
+            }
+
+            output += String.Format("\nMax HP/MP achieved with {0} resets", countResets);
+
+            //MessageBox.Show(output);
+
+            return countResets;
+        }
+
+        public int SimulateMaxSafeOnly()
+        {
+            int countResets = 0;
+
+            Node current = c.RootNode;
+
+            string output = String.Format("Level {0} ({1}/{2})", current.Level, current.HP, current.MP);
+
+            bool shouldPrintLevel = false;
+
+            while (current.Level < Controller.MAX_LEVEL)
+            {
+                bool valueIsSafe = false;
+
+                int countResetsLevel = 0, rngIdx = 1;
+
+                do
+                {
+                    HPMPGradientBase table = c.Character.GetTable((byte)(current.Level + 1));
+
+                    short hpDiffBase = (short)((short)(100 * (table.HP_BASE + (current.Level) * table.HP_GRADIENT) / current.HP) - 100),
+                        mpDiffBase = (short)((short)(100 * (table.MP_BASE + (short)((current.Level) * table.MP_GRADIENT / 10)) / current.MP) - 100);
+
+                    ushort[] hps = new ushort[Controller.RNG_LIST.GetLength(0)],
+                        mps = new ushort[Controller.RNG_LIST.GetLength(1)];
+
+                    for (int h = 0; h < hps.Length; h++)
+                    {
+                        hps[h] = (ushort)Math.Min(current.HP + (ushort)(table.HP_GRADIENT * Controller.HP_GAIN[Math.Min(Math.Max((int)((h + 1) + hpDiffBase), 0), 11)] / 100), 9999);
+                    }
+
+                    for (int m = 0; m < mps.Length; m++)
+                    {
+                        mps[m] = (ushort)Math.Min(current.MP + (ushort)((((ushort)((current.Level + 1) * table.MP_GRADIENT / 10) - (ushort)(current.Level * table.MP_GRADIENT / 10)) * Controller.MP_GAIN[Math.Min(Math.Max((int)((m + 1) + mpDiffBase), 0), 11)]) / 100), 999);
+                    }
+
+                    System.Security.Cryptography.RNGCryptoServiceProvider provider = new System.Security.Cryptography.RNGCryptoServiceProvider();
+                    byte[] rs = new byte[4];
+                    provider.GetBytes(rs);
+                    int r = rs[0];
+                    rngIdx = 1;
+                    while (r > 0)
+                    {
+                        r -= Controller.RNG_LIST[(rngIdx - 1) / 8, (rngIdx - 1) % 8];
+
+                        if (r >= 0)
+                        {
+                            rngIdx++;
+                        }
+                    }
+                    rngIdx--;
+
+                    while (Controller.RNG_LIST[rngIdx / 8, rngIdx % 8] == 0)
+                    {
+                        rngIdx++;
+                    }
+
+                    if (current.Level == c.Character.SafetyLevel)
+                    {
+                        shouldPrintLevel = true;
+                    }
+
+                    foreach (Node n in current.ChildNodes)
+                    {
+                        if (n.HP == hps[rngIdx / 8] && n.MP == mps[rngIdx % 8])
+                        {
+                            valueIsSafe = true;
+                            current = n;
+                            break;
+                        }
+                    }
+
+                    if (!valueIsSafe)
+                    {
+                        countResetsLevel++;
+                    }
+                }
+                while (!valueIsSafe);
+
+                if (shouldPrintLevel)
+                {
+                    output += String.Format("\nLevel {0} ({1}/{2}) ({3}&{4}) - {5} resets", current.Level, current.HP, current.MP, rngIdx / 8 + 1, rngIdx % 8 + 1, countResetsLevel);
+                }
+
+                countResets += countResetsLevel;
+            }
+
+            output += String.Format("\nMax HP/MP achieved with {0} resets", countResets);
+
+            //MessageBox.Show(output);
+
+            return countResets;
         }
     }
 }
