@@ -374,7 +374,50 @@ namespace FF7OptimalHP.Objects
                 {
                     foreach (Tuple<Node, byte, byte, byte> parent in entry.Value.ParentNodes)
                     {
-                        if (parent.Item1.MinPath == null || parent.Item1.MinPath.Resets > entry.Value.MinPath.Resets + (256.0 / parent.Item4) - 1)
+                        if (parent.Item1.MinPath == null || parent.Item1.MinPath.Resets > entry.Value.MinPath.Resets + ((256.0 / parent.Item1.GetProbSafe()) - 1))
+                        {
+                            Path p = new Path();
+
+                            foreach (Node n in entry.Value.MinPath.PathList)
+                            {
+                                p.PathList.AddLast(n);
+                            }
+                            p.PathList.AddLast(parent.Item1);
+
+                            if (parent.Item1.GetProbSafe() != 255)
+                            {
+                                p.Resets = entry.Value.MinPath.Resets + ((256.0 / parent.Item1.GetProbSafe()) - 1);
+                            }
+                            else
+                            {
+                                p.Resets = entry.Value.MinPath.Resets;
+                            }
+
+                            parent.Item1.MinPath = p;
+                        }
+
+                        if (parent.Item1.MaxPath == null || parent.Item1.MaxPath.Resets < entry.Value.MaxPath.Resets + ((256.0 / parent.Item1.GetProbSafe()) - 1))
+                        {
+                            Path p = new Path();
+
+                            foreach (Node n in entry.Value.MaxPath.PathList)
+                            {
+                                p.PathList.AddLast(n);
+                            }
+                            p.PathList.AddLast(parent.Item1);
+
+                            if (parent.Item1.GetProbSafe() != 255)
+                            {
+                                p.Resets = entry.Value.MaxPath.Resets + ((256.0 / parent.Item1.GetProbSafe()) - 1);
+                            }
+                            else
+                            {
+                                p.Resets = entry.Value.MaxPath.Resets;
+                            }
+
+                            parent.Item1.MaxPath = p;
+                        }
+                        /*if (parent.Item1.MinPath == null || parent.Item1.MinPath.Resets > entry.Value.MinPath.Resets + (256.0 / parent.Item4) - 1)
                         {
                             Path p = new Path();
 
@@ -414,7 +457,7 @@ namespace FF7OptimalHP.Objects
                             }
 
                             parent.Item1.MaxPath = p;
-                        }
+                        }*/
                     }
                 }
             }

@@ -362,25 +362,31 @@ namespace FF7OptimalHP
                         //MAKE MODS BELOW
                         //Calculate a heuristic value for the node in question
                         //double value = (current.MaxPath.Resets - tempCurrent.MaxPath.Resets) + (current.MinPath.Resets - tempCurrent.MinPath.Resets);
-                        double value = (current.MinPath.Resets - tempCurrent.MinPath.Resets);
+                        double value = tempCurrent.MinPath.Resets;
 
                         //Item4 is the number of times out of 256 that this will hit, (256 / x) - 1 represents the probable number of resets needed to hit this
                         //value -= ((256.0 / tempCurrent.FindParent(current).Item4) - 1);
 
                         //Loop thru all possible safe values and compare heuristic values, tally up the probability of a better value hitting
-                        int prob = 0;
+                        int prob = 0, countBetter = 0;
+                        double magicCalc = 1, amountGain = 0; //magicCalc is an attempt to combine the probability and amount of gained benefit from switching
                         foreach (Node n in current.ChildNodes)
                         {
                             double diffMax = current.MaxPath.Resets - n.MaxPath.Resets, diffMin = current.MinPath.Resets - n.MinPath.Resets;
-                            if (diffMin - ((256.0 / n.FindParent(current).Item4) - 1) > value)
+                            if (n.MinPath.Resets < value)
                             {
+                                countBetter++;
                                 prob += n.FindParent(current).Item4;
+                                amountGain += (value - n.MinPath.Resets);
+                                //magicCalc *= ((value - n.MinPath.Resets) * (n.FindParent(current).Item4 / 256.0));
                                 break;
                             }
                         }
 
+                        magicCalc = (amountGain / countBetter) * (prob / 256.0);
+
                         //this is the condition that will force the routine to try for a new value at the same level
-                        if (prob > 31)
+                        if (magicCalc > 3.0)
                         //MAKE MODS ABOVE
                         {
                             valueIsSafe = false;

@@ -57,6 +57,18 @@ namespace FF7OptimalHP.Objects
             return result;
         }
 
+        public byte GetProbSafe()
+        {
+            ushort prob = 0;
+
+            foreach (Node n in ChildNodes)
+            {
+                prob += n.FindParent(this).Item4;
+            }
+
+            return (byte)(prob > 255 ? 255 : prob);
+        }
+
         public void Delete()
         {
             //remove this child reference from all parents
