@@ -27,12 +27,12 @@ namespace FF7OptimalHP
         {
             if (e.Node.Nodes[0].Text == "")
             {
-                foreach (Tuple<Node, byte, byte, byte> n in ((Node)(e.Node.Tag)).ChildNodes)
+                foreach (Tuple<Node, byte, byte, byte> child in ((Node)(e.Node.Tag)).ChildNodes)
                 {
-                    if (n.Item1 != null)
+                    if (child.Item1 != null)
                     {
-                        TreeNode node = new TreeNode(n.Item1.ToString());
-                        node.Tag = n;
+                        TreeNode node = new TreeNode(child.Item1.ToString());
+                        node.Tag = child.Item1;
                         node.Nodes.Add(new TreeNode(""));
 
                         e.Node.Nodes.Add(node);
