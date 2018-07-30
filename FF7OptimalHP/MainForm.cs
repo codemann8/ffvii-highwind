@@ -123,10 +123,10 @@ namespace FF7OptimalHP
 
                 SetMemory(level, hp, mp);
             }
-
-            //c.FindMinMaxPath();
-
-            RefreshTree();
+            else
+            {
+                RefreshTree();
+            }
 
             lblStatus.Text = "Idle";
             stsStatus.BackColor = SystemColors.Control;
@@ -152,7 +152,7 @@ namespace FF7OptimalHP
                 }
 
                 c.TrimUpToSelectedNode();
-                //c.FindMinMaxPath();
+                c.FindMinMaxPath();
 
                 cboLevel.ResetText();
                 txtHP.Text = "";
@@ -253,7 +253,7 @@ namespace FF7OptimalHP
             {
                 c.SelectedNode = (Node)treePath.SelectedNode.Tag;
                 c.TrimUpToSelectedNode();
-                //c.FindMinMaxPath();
+                c.FindMinMaxPath();
 
                 RefreshTree();
             }
