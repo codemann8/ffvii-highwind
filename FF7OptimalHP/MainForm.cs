@@ -27,11 +27,11 @@ namespace FF7OptimalHP
         {
             if (e.Node.Nodes[0].Text == "")
             {
-                foreach (Node n in ((Node)(e.Node.Tag)).ChildNodes)
+                foreach (Tuple<Node, byte, byte, byte> n in ((Node)(e.Node.Tag)).ChildNodes)
                 {
-                    if (n != null)
+                    if (n.Item1 != null)
                     {
-                        TreeNode node = new TreeNode(n.ToString());
+                        TreeNode node = new TreeNode(n.Item1.ToString());
                         node.Tag = n;
                         node.Nodes.Add(new TreeNode(""));
 
@@ -124,7 +124,7 @@ namespace FF7OptimalHP
                 SetMemory(level, hp, mp);
             }
 
-            c.FindMinMaxPath();
+            //c.FindMinMaxPath();
 
             RefreshTree();
 
@@ -152,7 +152,7 @@ namespace FF7OptimalHP
                 }
 
                 c.TrimUpToSelectedNode();
-                c.FindMinMaxPath();
+                //c.FindMinMaxPath();
 
                 cboLevel.ResetText();
                 txtHP.Text = "";
@@ -253,7 +253,7 @@ namespace FF7OptimalHP
             {
                 c.SelectedNode = (Node)treePath.SelectedNode.Tag;
                 c.TrimUpToSelectedNode();
-                c.FindMinMaxPath();
+                //c.FindMinMaxPath();
 
                 RefreshTree();
             }
@@ -346,12 +346,12 @@ namespace FF7OptimalHP
                     //Check if chosen value is safe
                     Node tempCurrent = current;
 
-                    foreach (Node n in current.ChildNodes)
+                    foreach (Tuple<Node, byte, byte, byte> child in current.ChildNodes)
                     {
-                        if (n.HP == hps[rngIdx / 8] && n.MP == mps[rngIdx % 8])
+                        if (child.Item1.HP == hps[rngIdx / 8] && child.Item1.MP == mps[rngIdx % 8])
                         {
                             valueIsSafe = true;
-                            tempCurrent = n;
+                            tempCurrent = child.Item1;
                             break;
                         }
                     }
@@ -370,15 +370,15 @@ namespace FF7OptimalHP
                         //Loop thru all possible safe values and compare heuristic values, tally up the probability of a better value hitting
                         int prob = 0, countBetter = 0;
                         double magicCalc = 1, amountGain = 0; //magicCalc is an attempt to combine the probability and amount of gained benefit from switching
-                        foreach (Node n in current.ChildNodes)
+                        foreach (Tuple<Node, byte, byte, byte> child in current.ChildNodes)
                         {
-                            double diffMax = current.MaxPath.Resets - n.MaxPath.Resets, diffMin = current.MinPath.Resets - n.MinPath.Resets;
-                            if (n.MinPath.Resets < value)
+                            double diffMax = current.MaxPath.Resets - child.Item1.MaxPath.Resets, diffMin = current.MinPath.Resets - child.Item1.MinPath.Resets;
+                            if (child.Item1.MinPath.Resets < value)
                             {
                                 countBetter++;
-                                prob += n.FindParent(current).Item4;
-                                amountGain += (value - n.MinPath.Resets);
-                                //magicCalc *= ((value - n.MinPath.Resets) * (n.FindParent(current).Item4 / 256.0));
+                                prob += child.Item4;
+                                amountGain += (value - child.Item1.MinPath.Resets);
+                                //magicCalc *= ((value - child.Item1.MinPath.Resets) * (child.Item4 / 256.0));
                                 break;
                             }
                         }
@@ -481,12 +481,12 @@ namespace FF7OptimalHP
                         shouldPrintLevel = true;
                     }
 
-                    foreach (Node n in current.ChildNodes)
+                    foreach (Tuple<Node, byte, byte, byte> child in current.ChildNodes)
                     {
-                        if (n.HP == hps[rngIdx / 8] && n.MP == mps[rngIdx % 8])
+                        if (child.Item1.HP == hps[rngIdx / 8] && child.Item1.MP == mps[rngIdx % 8])
                         {
                             valueIsSafe = true;
-                            current = n;
+                            current = child.Item1;
                             break;
                         }
                     }

@@ -54,7 +54,7 @@ namespace FF7OptimalHP.Objects
             RootNode.Level = Character.StartLevel;
             RootNode.HP = Character.StartHP;
             RootNode.MP = Character.StartMP;
-            RootNode.ChildNodes = new List<Node>();
+            RootNode.ChildNodes = new List<Tuple<Node, byte, byte, byte>>();
 
             LevelIndex[RootNode.Level - 1].Add(RootNode.HP * 1000 + RootNode.MP, RootNode);
         }
@@ -144,11 +144,11 @@ namespace FF7OptimalHP.Objects
                     {
                         //search in local nodes
                         bool found = false;
-                        foreach (Node n in parent.ChildNodes)
+                        foreach (Tuple<Node, byte, byte, byte> child in parent.ChildNodes)
                         {
-                            if (n != null)
+                            if (child.Item1 != null)
                             {
-                                if (n.HP == hps[h] && n.MP == mps[m])
+                                if (child.Item1.HP == hps[h] && child.Item1.MP == mps[m])
                                 {
                                     found = true;
                                     break;
@@ -165,7 +165,7 @@ namespace FF7OptimalHP.Objects
                             {
                                 if (n != null)
                                 {
-                                    parent.ChildNodes.Add(n);
+                                    parent.ChildNodes.Add(Tuple.Create<Node, byte, byte, byte>(n, (byte)(h + 1), (byte)(m + 1), overallProb[h, m]));
                                     n.ParentNodes.Add(Tuple.Create<Node, byte, byte, byte>(parent, (byte)(h + 1), (byte)(m + 1), overallProb[h, m]));
 
                                     found = true;
@@ -180,9 +180,9 @@ namespace FF7OptimalHP.Objects
                                 node.Level = level;
                                 node.HP = hps[h];
                                 node.MP = mps[m];
-                                node.ChildNodes = new List<Node>();
+                                node.ChildNodes = new List<Tuple<Node, byte, byte, byte>>();
 
-                                parent.ChildNodes.Add(node);
+                                parent.ChildNodes.Add(Tuple.Create<Node, byte, byte, byte>(node, (byte)(h + 1), (byte)(m + 1), overallProb[h, m]));
                                 node.ParentNodes.Add(Tuple.Create<Node, byte, byte, byte>(parent, (byte)(h + 1), (byte)(m + 1), overallProb[h, m]));
 
                                 LevelIndex[node.Level - 1].Add(node.HP * 1000 + node.MP, node);
@@ -200,22 +200,22 @@ namespace FF7OptimalHP.Objects
                 {
                     if (parent.ChildNodes[n] != null)
                     {
-                        if (parent.ChildNodes[n].HP > Character.HPMax)
+                        if (parent.ChildNodes[n].Item1.HP > Character.HPMax)
                         {
                             //HP has new MAX!!!
                             level = level;
                         }
-                        else if (parent.ChildNodes[n].MP > Character.MPMaxAbs)
+                        else if (parent.ChildNodes[n].Item1.MP > Character.MPMaxAbs)
                         {
                             //MP has new MAX!!!
                             level = level;
                         }
-                        else if (parent.ChildNodes[n].HP >= Character.HPMax && parent.ChildNodes[n].MP > Character.MPMax)
+                        else if (parent.ChildNodes[n].Item1.HP >= Character.HPMax && parent.ChildNodes[n].Item1.MP > Character.MPMax)
                         {
                             //MP has new combined MAX!!!
                             level = level;
                         }
-                        else if (parent.ChildNodes[n].HP >= Character.HPMax && parent.ChildNodes[n].MP >= Character.MPMax)
+                        else if (parent.ChildNodes[n].Item1.HP >= Character.HPMax && parent.ChildNodes[n].Item1.MP >= Character.MPMax)
                         {
                             //Found the usual MAX
                             level = level;
@@ -276,9 +276,9 @@ namespace FF7OptimalHP.Objects
                 {
                     if (entry.Value != null)
                     {
-                        foreach (Node c in entry.Value.ChildNodes.ToList())
+                        foreach (Tuple<Node, byte, byte, byte> c in entry.Value.ChildNodes.ToList())
                         {
-                            if (c == null)
+                            if (c.Item1 == null)
                             {
                                 //shouldn't be possble
                                 entry.Value.ChildNodes.Remove(c);
@@ -417,47 +417,6 @@ namespace FF7OptimalHP.Objects
 
                             parent.Item1.MaxPath = p;
                         }
-                        /*if (parent.Item1.MinPath == null || parent.Item1.MinPath.Resets > entry.Value.MinPath.Resets + (256.0 / parent.Item4) - 1)
-                        {
-                            Path p = new Path();
-
-                            foreach (Node n in entry.Value.MinPath.PathList)
-                            {
-                                p.PathList.AddLast(n);
-                            }
-                            p.PathList.AddLast(parent.Item1);
-                            if (parent.Item4 != 255)
-                            {
-                                p.Resets = entry.Value.MinPath.Resets + (256.0 / parent.Item4) - 1;
-                            }
-                            else
-                            {
-                                p.Resets = entry.Value.MinPath.Resets;
-                            }
-
-                            parent.Item1.MinPath = p;
-                        }
-
-                        if (parent.Item1.MaxPath == null || parent.Item1.MaxPath.Resets < entry.Value.MaxPath.Resets + (256.0 / parent.Item4) - 1)
-                        {
-                            Path p = new Path();
-
-                            foreach (Node n in entry.Value.MaxPath.PathList)
-                            {
-                                p.PathList.AddLast(n);
-                            }
-                            p.PathList.AddLast(parent.Item1);
-                            if (parent.Item4 != 255)
-                            {
-                                p.Resets = entry.Value.MaxPath.Resets + (256.0 / parent.Item4) - 1;
-                            }
-                            else
-                            {
-                                p.Resets = entry.Value.MaxPath.Resets;
-                            }
-
-                            parent.Item1.MaxPath = p;
-                        }*/
                     }
                 }
             }
@@ -466,20 +425,18 @@ namespace FF7OptimalHP.Objects
             {
                 foreach (KeyValuePair<int, Node> entry in LevelIndex[l])
                 {
-                    foreach (Node child in entry.Value.ChildNodes)
+                    foreach (Tuple<Node, byte, byte, byte> child in entry.Value.ChildNodes)
                     {
-                        Tuple<Node, byte, byte, byte> parent = child.FindParent(entry.Value);
-
-                        if (child.MinPath != null)
+                        if (child.Item1.MinPath != null)
                         {
-                            child.MinPath.Chances = parent.Item4;
-                            child.MaxPath.Chances = parent.Item4;
+                            child.Item1.MinPath.Chances = child.Item4;
+                            child.Item1.MaxPath.Chances = child.Item4;
                         }
 
-                        if (child.MaxPath == null || child.MaxPath.Resets < entry.Value.MaxPath.Resets + (256.0 / parent.Item4) - 1)
+                        if (child.Item1.MaxPath == null || child.Item1.MaxPath.Resets < entry.Value.MaxPath.Resets + (256.0 / child.Item4) - 1)
                         {
-                            child.MinPath.Chances = parent.Item4;
-                            child.MaxPath.Chances = parent.Item4;
+                            child.Item1.MinPath.Chances = child.Item4;
+                            child.Item1.MaxPath.Chances = child.Item4;
                         }
                     }
                 }
@@ -615,7 +572,7 @@ namespace FF7OptimalHP.Objects
                 node.HP = BitConverter.ToUInt16(serializedInput, i + 1);
                 node.MP = BitConverter.ToUInt16(serializedInput, i + 3);
 
-                node.ChildNodes = new List<Node>();
+                node.ChildNodes = new List<Tuple<Node, byte, byte, byte>>();
 
                 LevelIndex[node.Level - 1].Add(node.HP * 1000 + node.MP, node);
 
@@ -644,9 +601,9 @@ namespace FF7OptimalHP.Objects
 
                                 bool found = false;
 
-                                foreach (Node n in parentNode.ChildNodes)
+                                foreach (Tuple<Node, byte, byte, byte> child in parentNode.ChildNodes)
                                 {
-                                    if (n.HP == node.HP && n.MP == node.MP)
+                                    if (child.Item1.HP == node.HP && child.Item1.MP == node.MP)
                                     {
                                         found = true;
                                         break;
@@ -655,7 +612,7 @@ namespace FF7OptimalHP.Objects
 
                                 if (!found)
                                 {
-                                    parentNode.ChildNodes.Add(node);
+                                    parentNode.ChildNodes.Add(Tuple.Create<Node, byte, byte, byte>(node, serializedInput[i], serializedInput[i + 1], serializedInput[i + 2]));
                                 }
                             }
 

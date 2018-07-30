@@ -21,7 +21,7 @@ namespace FF7OptimalHP.Objects
 
         public List<Tuple<Node, byte, byte, byte>> ParentNodes;
 
-        public List<Node> ChildNodes;
+        public List<Tuple<Node, byte, byte, byte>> ChildNodes;
 
         public Path MinPath, MaxPath;
 
@@ -45,6 +45,19 @@ namespace FF7OptimalHP.Objects
             return null;
         }
 
+        public Tuple<Node, byte, byte, byte> FindChild(Node node)
+        {
+            foreach (Tuple<Node, byte, byte, byte> child in ChildNodes)
+            {
+                if (node.HP == child.Item1.HP && node.MP == child.Item1.MP)
+                {
+                    return child;
+                }
+            }
+
+            return null;
+        }
+
         public override string ToString()
         {
             string result = String.Format("Lv{0} ({1} / {2})", Level, HP, MP);
@@ -61,9 +74,9 @@ namespace FF7OptimalHP.Objects
         {
             ushort prob = 0;
 
-            foreach (Node n in ChildNodes)
+            foreach (Tuple<Node, byte, byte, byte> child in ChildNodes)
             {
-                prob += n.FindParent(this).Item4;
+                prob += child.Item4;
             }
 
             return (byte)(prob > 255 ? 255 : prob);
@@ -78,11 +91,11 @@ namespace FF7OptimalHP.Objects
                 {
                     if (t.Item1 != null)
                     {
-                        foreach (Node n in t.Item1.ChildNodes)
+                        foreach (Tuple<Node, byte, byte, byte> child in t.Item1.ChildNodes)
                         {
-                            if (n.HP == HP && n.MP == MP)
+                            if (child.Item1.HP == HP && child.Item1.MP == MP)
                             {
-                                t.Item1.ChildNodes.Remove(n);
+                                t.Item1.ChildNodes.Remove(child);
                                 break;
                             }
                         }
@@ -93,15 +106,15 @@ namespace FF7OptimalHP.Objects
             //remove this parent reference from all children
             if (ChildNodes != null)
             {
-                foreach (Node n in ChildNodes)
+                foreach (Tuple<Node, byte, byte, byte> child in ChildNodes)
                 {
-                    if (n != null)
+                    if (child.Item1 != null)
                     {
-                        foreach (Tuple<Node, byte, byte, byte> t in n.ParentNodes)
+                        foreach (Tuple<Node, byte, byte, byte> t in child.Item1.ParentNodes)
                         {
                             if (t.Item1.HP == HP && t.Item1.MP == MP)
                             {
-                                n.ParentNodes.Remove(t);
+                                child.Item1.ParentNodes.Remove(t);
                                 break;
                             }
                         }
@@ -110,7 +123,7 @@ namespace FF7OptimalHP.Objects
             }
 
             ParentNodes = new List<Tuple<Node, byte, byte, byte>>();
-            ChildNodes = new List<Node>();
+            ChildNodes = new List<Tuple<Node, byte, byte, byte>>();
         }
     }
 }
