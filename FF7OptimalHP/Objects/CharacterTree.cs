@@ -232,7 +232,7 @@ namespace FF7OptimalHP.Objects
                 }
             }
 
-            PruneTree();
+            PruneTree(RootNode.Level);
         }
 
         public void PruneTree(byte upToLevel = 1)
@@ -281,7 +281,7 @@ namespace FF7OptimalHP.Objects
                 }
             }
 
-            for (int l = Character.StartLevel; l < LevelIndex.Length; l++)
+            for (int l = Math.Max(Character.StartLevel, upToLevel); l < LevelIndex.Length; l++)
             {
                 List<int> removals = new List<int>();
 
@@ -415,6 +415,34 @@ namespace FF7OptimalHP.Objects
                     }
                 }
 
+                if (SelectedNode.MinPath == null)
+                {
+                    Path p = new Path();
+
+                    foreach (Node n in SelectedNode.ChildNodes[0].Item1.MinPath.PathList)
+                    {
+                        p.PathList.AddLast(n);
+                    }
+                    p.PathList.AddLast(SelectedNode);
+                    p.Resets = SelectedNode.ChildNodes[0].Item1.MinPath.Resets;
+
+                    SelectedNode.MinPath = p;
+                }
+
+                if (SelectedNode.MaxPath == null)
+                {
+                    Path p = new Path();
+
+                    foreach (Node n in SelectedNode.ChildNodes[0].Item1.MaxPath.PathList)
+                    {
+                        p.PathList.AddLast(n);
+                    }
+                    p.PathList.AddLast(SelectedNode);
+                    p.Resets = SelectedNode.ChildNodes[0].Item1.MaxPath.Resets;
+
+                    SelectedNode.MaxPath = p;
+                }
+
                 SelectedNode.MinPath.Chances = 256;
                 SelectedNode.MaxPath.Chances = 256;
             }
@@ -472,7 +500,7 @@ namespace FF7OptimalHP.Objects
                 }
             }
 
-            PruneTree();
+            PruneTree(SelectedNode.Level);
         }
 
         public void ExportTree(string fileName)
@@ -526,7 +554,7 @@ namespace FF7OptimalHP.Objects
             }
         }
 
-        public void ImportTree(string fileName)
+        public void ImportTree(string fileName, int selectedNodeValue = 0)
         {
             byte[] serializedInput = File.ReadAllBytes(fileName);
 
@@ -539,6 +567,8 @@ namespace FF7OptimalHP.Objects
 
             RootNode = null;
 
+            bool skipAhead = selectedNodeValue > 0;
+
             for (int i = 0; i < serializedInput.Length; )
             {
                 Node node = new Node();
@@ -546,13 +576,21 @@ namespace FF7OptimalHP.Objects
                 node.HP = BitConverter.ToUInt16(serializedInput, i + 1);
                 node.MP = BitConverter.ToUInt16(serializedInput, i + 3);
 
-                node.ChildNodes = new List<Tuple<Node, byte, byte, byte>>();
-
-                LevelIndex[node.Level - 1].Add(node.HP * 1000 + node.MP, node);
-
-                if (RootNode == null)
+                if (skipAhead && selectedNodeValue / 10000000 < node.Level)
                 {
-                    RootNode = node;
+                    skipAhead = false;
+                }
+
+                if (!skipAhead || selectedNodeValue == node.Level * 10000000 + node.HP * 1000 + node.MP)
+                {
+                    node.ChildNodes = new List<Tuple<Node, byte, byte, byte>>();
+
+                    LevelIndex[node.Level - 1].Add(node.HP * 1000 + node.MP, node);
+
+                    if (RootNode == null)
+                    {
+                        RootNode = node;
+                    }
                 }
 
                 i += 5;

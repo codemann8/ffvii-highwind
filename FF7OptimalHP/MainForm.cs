@@ -75,6 +75,8 @@ namespace FF7OptimalHP
             {
                 stsStatus.BackColor = Color.Coral;
 
+                int value = c.GetMemory(c.ActiveTree.Character);
+
                 string fileName = String.Format("{0}\\FFVIICache\\{1}.hpmp", AppDomain.CurrentDomain.BaseDirectory, c.ActiveTree.Character.GetFilenamePrefix());
 
                 if (File.Exists(fileName))
@@ -82,7 +84,14 @@ namespace FF7OptimalHP
                     lblStatus.Text = "Loading...";
                     Application.DoEvents();
 
-                    c.ActiveTree.ImportTree(fileName);
+                    c.ActiveTree.ImportTree(fileName, value);
+
+                    c.ActiveTree.SelectedNode = c.ActiveTree.RootNode;
+
+                    c.ActiveTree.TrimUpToSelectedNode();
+                    c.ActiveTree.FindMinMaxPath();
+
+                    RefreshTree();
                 }
                 else
                 {
@@ -100,36 +109,26 @@ namespace FF7OptimalHP
                     Application.DoEvents();
 
                     c.ActiveTree.ExportTree(fileName);
-                }
 
-                var property = new System.Configuration.SettingsProperty(Properties.Settings.Default.Properties["CharacterMemory"]);
-                property.Name = c.ActiveTree.Character.GetFilenamePrefix();
-                try
-                {
-                    Properties.Settings.Default.Properties.Add(property);
-                }
-                catch (ArgumentException ex) { }
+                    c.ActiveTree.SelectedNode = c.ActiveTree.RootNode;
 
-                c.ActiveTree.SelectedNode = c.ActiveTree.RootNode;
+                    if (value > 0)
+                    {
+                        ushort mp = (ushort)(value % 1000);
+                        value /= 1000;
+                        ushort hp = (ushort)(value % 10000);
+                        value /= 10000;
+                        byte level = (byte)value;
 
-                int value = (int)Properties.Settings.Default[c.ActiveTree.Character.GetFilenamePrefix()];
+                        lblStatus.Text = "Setting...";
+                        Application.DoEvents();
 
-                if (value > 0)
-                {
-                    ushort mp = (ushort)(value % 1000);
-                    value /= 1000;
-                    ushort hp = (ushort)(value % 10000);
-                    value /= 10000;
-                    byte level = (byte)value;
-
-                    lblStatus.Text = "Setting...";
-                    Application.DoEvents();
-
-                    SetMemory(level, hp, mp);
-                }
-                else
-                {
-                    RefreshTree();
+                        SetMemory(level, hp, mp);
+                    }
+                    else
+                    {
+                        RefreshTree();
+                    }
                 }
 
                 lblStatus.Text = "Idle";
@@ -149,15 +148,17 @@ namespace FF7OptimalHP
                 {
                     MessageBox.Show("The values entered are NOT safe values");
                 }
-                Properties.Settings.Default[c.ActiveTree.Character.GetFilenamePrefix()] = 0;
-                Properties.Settings.Default.Save();
+
+                c.Memory.Remove(c.ActiveTree.Character.GetFilenamePrefix());
+                c.SaveSettings();
             }
             else
             {
                 if (save)
                 {
-                    Properties.Settings.Default[c.ActiveTree.Character.GetFilenamePrefix()] = level * 10000000 + hp * 1000 + mp;
-                    Properties.Settings.Default.Save();
+                    c.Memory.Remove(c.ActiveTree.Character.GetFilenamePrefix());
+                    c.Memory.Add(c.ActiveTree.Character.GetFilenamePrefix(), level * 10000000 + hp * 1000 + mp);
+                    c.SaveSettings();
                 }
 
                 c.ActiveTree.TrimUpToSelectedNode();
@@ -236,7 +237,7 @@ namespace FF7OptimalHP
 
             SetMemory(1, 0, 0);
 
-            c.ActiveTree.SelectedNode = c.ActiveTree.RootNode;
+            c.ActiveTree = new CharacterTree(c.ActiveTree.Character);
 
             LoadDefaultTree();
 
@@ -261,6 +262,10 @@ namespace FF7OptimalHP
                 c.ActiveTree.SelectedNode = (Node)treePath.SelectedNode.Tag;
                 c.ActiveTree.TrimUpToSelectedNode();
                 c.ActiveTree.FindMinMaxPath();
+
+                c.Memory.Remove(c.ActiveTree.Character.GetFilenamePrefix());
+                c.Memory.Add(c.ActiveTree.Character.GetFilenamePrefix(), c.ActiveTree.SelectedNode.Level * 10000000 + c.ActiveTree.SelectedNode.HP * 10000 + c.ActiveTree.SelectedNode.MP);
+                c.SaveSettings();
 
                 RefreshTree();
             }

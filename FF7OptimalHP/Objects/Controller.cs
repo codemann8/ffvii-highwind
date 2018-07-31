@@ -30,11 +30,17 @@ namespace FF7OptimalHP.Objects
 
         private Dictionary<string, CharacterTree> CharacterTrees;
 
+        public Dictionary<string, int> Memory;
+
         public DateTime StartTime;
 
         public Controller()
         {
             CharacterTrees = new Dictionary<string, CharacterTree>();
+
+            Memory = new Dictionary<string, int>();
+
+            LoadSettings();
         }
 
         public void InitCharacter(Character character)
@@ -51,6 +57,54 @@ namespace FF7OptimalHP.Objects
             StartTime = DateTime.Now;
 
             ActiveTree.AddLevelDepthFirst(ActiveTree.RootNode);
+        }
+
+        public void LoadSettings()
+        {
+            string fileName = String.Format("{0}\\FFVIICache\\app.settings", AppDomain.CurrentDomain.BaseDirectory);
+                
+            if (File.Exists(fileName))
+            {
+                foreach (string line in File.ReadLines(fileName))
+                {
+                    string[] tuple = line.Split(':');
+                    Memory.Add(tuple[0], Int32.Parse(tuple[1]));
+                }
+            }
+        }
+
+        public void SaveSettings()
+        {
+            if (Memory != null)
+            {
+                string fileName = String.Format("{0}\\FFVIICache\\app.settings", AppDomain.CurrentDomain.BaseDirectory);
+
+                if (!Directory.Exists(fileName.Substring(0, fileName.LastIndexOf(@"\"))))
+                {
+                    Directory.CreateDirectory(fileName.Substring(0, fileName.LastIndexOf(@"\")));
+                }
+
+                string[] lines = new string[Memory.Count];
+
+                int i = 0;
+
+                foreach (KeyValuePair<string, int> entry in Memory)
+                {
+                    lines[i] = String.Format("{0}:{1}", entry.Key, entry.Value);
+                    i++;
+                }
+
+                File.WriteAllLines(fileName, lines);
+            }
+        }
+
+        public int GetMemory(Character character)
+        {
+            int ret = 0;
+
+            Memory.TryGetValue(character.GetFilenamePrefix(), out ret);
+
+            return ret;
         }
     }
 }
