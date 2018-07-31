@@ -21,6 +21,8 @@ namespace FF7OptimalHP
         public MainForm()
         {
             InitializeComponent();
+
+            c = new Controller();
         }
 
         private void treePath_BeforeExpand(object sender, TreeViewCancelEventArgs e)
@@ -49,15 +51,15 @@ namespace FF7OptimalHP
 
             TreeNode node;
 
-            if (c.SelectedNode != null)
+            if (c.ActiveTree.SelectedNode != null)
             {
-                node = new TreeNode(c.SelectedNode.ToString());
-                node.Tag = c.SelectedNode;
+                node = new TreeNode(c.ActiveTree.SelectedNode.ToString());
+                node.Tag = c.ActiveTree.SelectedNode;
             }
             else
             {
-                node = new TreeNode(c.RootNode.ToString());
-                node.Tag = c.RootNode;
+                node = new TreeNode(c.ActiveTree.RootNode.ToString());
+                node.Tag = c.ActiveTree.RootNode;
             }
 
             node.Nodes.Add(new TreeNode(""));
@@ -69,90 +71,97 @@ namespace FF7OptimalHP
 
         private void LoadDefaultTree()
         {
-            stsStatus.BackColor = Color.Coral;
-
-            string fileName = String.Format("{0}\\FFVIICache\\{1}.hpmp", AppDomain.CurrentDomain.BaseDirectory, c.Character.GetFilenamePrefix());
-
-            if (File.Exists(fileName))
+            if (c.ActiveTree.LevelIndex[Controller.MAX_LEVEL - 1].Count == 0)
             {
-                lblStatus.Text = "Loading...";
-                Application.DoEvents();
+                stsStatus.BackColor = Color.Coral;
 
-                c.ImportTree(fileName);
-            }
-            else
-            {
-                lblStatus.Text = "Building...";
-                Application.DoEvents();
+                string fileName = String.Format("{0}\\FFVIICache\\{1}.hpmp", AppDomain.CurrentDomain.BaseDirectory, c.ActiveTree.Character.GetFilenamePrefix());
 
-                c.Run();
+                if (File.Exists(fileName))
+                {
+                    lblStatus.Text = "Loading...";
+                    Application.DoEvents();
 
-                lblStatus.Text = "Trimming...";
-                Application.DoEvents();
+                    c.ActiveTree.ImportTree(fileName);
+                }
+                else
+                {
+                    lblStatus.Text = "Building...";
+                    Application.DoEvents();
 
-                c.RemoveSubPars();
+                    c.Run();
 
-                lblStatus.Text = "Saving...";
-                Application.DoEvents();
+                    lblStatus.Text = "Trimming...";
+                    Application.DoEvents();
 
-                c.ExportTree(fileName);
-            }
+                    c.ActiveTree.RemoveSubPars();
 
-            var property = new System.Configuration.SettingsProperty(Properties.Settings.Default.Properties["CharacterMemory"]);
-            property.Name = c.Character.GetFilenamePrefix();
-            try
-            {
-                Properties.Settings.Default.Properties.Add(property);
-            }
-            catch (ArgumentException ex) { }
+                    lblStatus.Text = "Saving...";
+                    Application.DoEvents();
 
-            c.SelectedNode = c.RootNode;
+                    c.ActiveTree.ExportTree(fileName);
+                }
 
-            int value = (int)Properties.Settings.Default[c.Character.GetFilenamePrefix()];
+                var property = new System.Configuration.SettingsProperty(Properties.Settings.Default.Properties["CharacterMemory"]);
+                property.Name = c.ActiveTree.Character.GetFilenamePrefix();
+                try
+                {
+                    Properties.Settings.Default.Properties.Add(property);
+                }
+                catch (ArgumentException ex) { }
 
-            if (value > 0)
-            {
-                ushort mp = (ushort)(value % 1000);
-                value /= 1000;
-                ushort hp = (ushort)(value % 10000);
-                value /= 10000;
-                byte level = (byte)value;
+                c.ActiveTree.SelectedNode = c.ActiveTree.RootNode;
 
-                lblStatus.Text = "Setting...";
-                Application.DoEvents();
+                int value = (int)Properties.Settings.Default[c.ActiveTree.Character.GetFilenamePrefix()];
 
-                SetMemory(level, hp, mp);
+                if (value > 0)
+                {
+                    ushort mp = (ushort)(value % 1000);
+                    value /= 1000;
+                    ushort hp = (ushort)(value % 10000);
+                    value /= 10000;
+                    byte level = (byte)value;
+
+                    lblStatus.Text = "Setting...";
+                    Application.DoEvents();
+
+                    SetMemory(level, hp, mp);
+                }
+                else
+                {
+                    RefreshTree();
+                }
+
+                lblStatus.Text = "Idle";
+                stsStatus.BackColor = SystemColors.Control;
             }
             else
             {
                 RefreshTree();
             }
-
-            lblStatus.Text = "Idle";
-            stsStatus.BackColor = SystemColors.Control;
         }
 
         private void SetMemory(byte level, ushort hp, ushort mp, bool save = false)
         {
-            if (!c.LevelIndex[level - 1].TryGetValue(hp * 1000 + mp, out c.SelectedNode))
+            if (!c.ActiveTree.LevelIndex[level - 1].TryGetValue(hp * 1000 + mp, out c.ActiveTree.SelectedNode))
             {
                 if (save)
                 {
                     MessageBox.Show("The values entered are NOT safe values");
                 }
-                Properties.Settings.Default[c.Character.GetFilenamePrefix()] = 0;
+                Properties.Settings.Default[c.ActiveTree.Character.GetFilenamePrefix()] = 0;
                 Properties.Settings.Default.Save();
             }
             else
             {
                 if (save)
                 {
-                    Properties.Settings.Default[c.Character.GetFilenamePrefix()] = level * 10000000 + hp * 1000 + mp;
+                    Properties.Settings.Default[c.ActiveTree.Character.GetFilenamePrefix()] = level * 10000000 + hp * 1000 + mp;
                     Properties.Settings.Default.Save();
                 }
 
-                c.TrimUpToSelectedNode();
-                c.FindMinMaxPath();
+                c.ActiveTree.TrimUpToSelectedNode();
+                c.ActiveTree.FindMinMaxPath();
 
                 cboLevel.ResetText();
                 txtHP.Text = "";
@@ -168,8 +177,6 @@ namespace FF7OptimalHP
 
             if (radio.Checked)
             {
-                c = new Controller();
-
                 switch (radio.Name)
                 {
                     case "rdoCloud":
@@ -204,7 +211,7 @@ namespace FF7OptimalHP
                 c.InitCharacter(chr);
 
                 cboLevel.Items.Clear();
-                for (byte l = c.Character.StartLevel; l <= Controller.MAX_LEVEL; l++)
+                for (byte l = c.ActiveTree.Character.StartLevel; l <= Controller.MAX_LEVEL; l++)
                 {
                     cboLevel.Items.Add(l);
                 }
@@ -229,7 +236,7 @@ namespace FF7OptimalHP
 
             SetMemory(1, 0, 0);
 
-            c.SelectedNode = c.RootNode;
+            c.ActiveTree.SelectedNode = c.ActiveTree.RootNode;
 
             LoadDefaultTree();
 
@@ -251,9 +258,9 @@ namespace FF7OptimalHP
             }
             else if (treePath.SelectedNode != null && treePath.SelectedNode.Tag != null)
             {
-                c.SelectedNode = (Node)treePath.SelectedNode.Tag;
-                c.TrimUpToSelectedNode();
-                c.FindMinMaxPath();
+                c.ActiveTree.SelectedNode = (Node)treePath.SelectedNode.Tag;
+                c.ActiveTree.TrimUpToSelectedNode();
+                c.ActiveTree.FindMinMaxPath();
 
                 RefreshTree();
             }
@@ -283,7 +290,7 @@ namespace FF7OptimalHP
         {
             int countResets = 0;
 
-            Node current = c.RootNode;
+            Node current = c.ActiveTree.RootNode;
 
             string output = String.Format("Level {0} ({1}/{2})", current.Level, current.HP, current.MP);
 
@@ -297,13 +304,13 @@ namespace FF7OptimalHP
 
                 do
                 {
-                    if (current.Level == c.Character.SafetyLevel)
+                    if (current.Level == c.ActiveTree.Character.SafetyLevel)
                     {
                         shouldPrintLevel = true;
                     }
 
                     //Calculating next level's possible values
-                    HPMPGradientBase table = c.Character.GetTable((byte)(current.Level + 1));
+                    HPMPGradientBase table = c.ActiveTree.Character.GetTable((byte)(current.Level + 1));
 
                     short hpDiffBase = (short)((short)(100 * (table.HP_BASE + (current.Level) * table.HP_GRADIENT) / current.HP) - 100),
                         mpDiffBase = (short)((short)(100 * (table.MP_BASE + (short)((current.Level) * table.MP_GRADIENT / 10)) / current.MP) - 100);
@@ -423,7 +430,7 @@ namespace FF7OptimalHP
         {
             int countResets = 0;
 
-            Node current = c.RootNode;
+            Node current = c.ActiveTree.RootNode;
 
             string output = String.Format("Level {0} ({1}/{2})", current.Level, current.HP, current.MP);
 
@@ -437,7 +444,7 @@ namespace FF7OptimalHP
 
                 do
                 {
-                    HPMPGradientBase table = c.Character.GetTable((byte)(current.Level + 1));
+                    HPMPGradientBase table = c.ActiveTree.Character.GetTable((byte)(current.Level + 1));
 
                     short hpDiffBase = (short)((short)(100 * (table.HP_BASE + (current.Level) * table.HP_GRADIENT) / current.HP) - 100),
                         mpDiffBase = (short)((short)(100 * (table.MP_BASE + (short)((current.Level) * table.MP_GRADIENT / 10)) / current.MP) - 100);
@@ -476,7 +483,7 @@ namespace FF7OptimalHP
                         rngIdx++;
                     }
 
-                    if (current.Level == c.Character.SafetyLevel)
+                    if (current.Level == c.ActiveTree.Character.SafetyLevel)
                     {
                         shouldPrintLevel = true;
                     }

@@ -96,6 +96,7 @@
     <Compile Include="Objects\Characters\Character.cs" />
     <Compile Include="Objects\Characters\AerisCharacter.cs" />
     <Compile Include="Objects\Characters\CloudCharacter.cs" />
+    <Compile Include="Objects\CharacterTree.cs" />
     <Compile Include="Objects\Controller.cs" />
     <Compile Include="Objects\HPMPGradientBase.cs" />
     <Compile Include="Objects\Node.cs" />
