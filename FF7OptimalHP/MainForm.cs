@@ -93,10 +93,6 @@ namespace FF7OptimalHP
                     int memory = c.GetMemory(c.ActiveTree.Character);
 
                     c.ActiveTree.ImportTree(fileName, memory);
-
-                    c.ActiveTree.SelectedNode = c.ActiveTree.RootNode;
-
-                    c.ActiveTree.TrimUpToSelectedNode();
                 }
                 else
                 {
@@ -114,8 +110,6 @@ namespace FF7OptimalHP
                     Application.DoEvents();
 
                     c.ActiveTree.ExportTree(fileName);
-
-                    c.ActiveTree.SelectedNode = c.ActiveTree.RootNode;
                 }
 
                 lblStatus.Text = "Analyzing...";
@@ -136,10 +130,10 @@ namespace FF7OptimalHP
 
             TreeNode node;
 
-            if (c.ActiveTree.SelectedNode != null)
+            if (c.ActiveTree.RootNode != null)
             {
-                node = new TreeNode(c.ActiveTree.SelectedNode.ToString());
-                node.Tag = c.ActiveTree.SelectedNode;
+                node = new TreeNode(c.ActiveTree.RootNode.ToString());
+                node.Tag = c.ActiveTree.RootNode;
             }
             else
             {
@@ -158,12 +152,23 @@ namespace FF7OptimalHP
         {
             if (e.Node.Nodes[0].Text == "")
             {
-                foreach (NodeLink child in ((Node)(e.Node.Tag)).ChildNodes)
+                Node tag = null;
+
+                if (e.Node.Tag is Node)
+                {
+                    tag = (Node)e.Node.Tag;
+                }
+                else if (e.Node.Tag is NodeLink)
+                {
+                    tag = ((NodeLink)e.Node.Tag).Child;
+                }
+
+                foreach (NodeLink child in tag.ChildNodes)
                 {
                     if (child.Child != null)
                     {
-                        TreeNode node = new TreeNode(child.Child.ToString());
-                        node.Tag = child.Child;
+                        TreeNode node = new TreeNode(child.ToString());
+                        node.Tag = child;
                         node.Nodes.Add(new TreeNode(""));
 
                         e.Node.Nodes.Add(node);
@@ -204,15 +209,20 @@ namespace FF7OptimalHP
             {
                 success = true;
 
-                c.ActiveTree.SelectedNode = (Node)treePath.SelectedNode.Tag;
+                if (treePath.SelectedNode.Tag is Node)
+                {
+                    c.ActiveTree.RootNode = (Node)treePath.SelectedNode.Tag;
+                }
+                else if (treePath.SelectedNode.Tag is NodeLink)
+                {
+                    c.ActiveTree.RootNode = ((NodeLink)treePath.SelectedNode.Tag).Child;
+                }
 
-                c.SetMemory(c.ActiveTree.Character, c.ActiveTree.SelectedNode.Level * 10000000 + c.ActiveTree.SelectedNode.HP * 1000 + c.ActiveTree.SelectedNode.MP);
+                c.SetMemory(c.ActiveTree.Character, c.ActiveTree.RootNode.Level * 10000000 + c.ActiveTree.RootNode.HP * 1000 + c.ActiveTree.RootNode.MP);
             }
 
             if (success)
             {
-                c.ActiveTree.TrimUpToSelectedNode();
-
                 lblStatus.Text = "Analyzing...";
                 Application.DoEvents();
 
@@ -248,8 +258,8 @@ namespace FF7OptimalHP
 
             for (int i = 0; i < numberOfSimulations; i++)
             {
-                int resets = SimulateMaxSafeOnly();
-                //int resets = SimulateMaxBetterSafe();
+                //int resets = SimulateMaxSafeOnly();
+                int resets = SimulateMaxBetterSafe();
                 countTotalResets += resets;
                 minResets = Math.Min(minResets, resets);
                 maxResets = Math.Max(maxResets, resets);
@@ -261,11 +271,8 @@ namespace FF7OptimalHP
         public int SimulateMaxBetterSafe()
         {
             int countResets = 0;
-
             Node current = c.ActiveTree.RootNode;
-
             string output = String.Format("Level {0} ({1}/{2})", current.Level, current.HP, current.MP);
-
             bool shouldPrintLevel = false;
 
             while (current.Level < Controller.MAX_LEVEL)
@@ -349,14 +356,14 @@ namespace FF7OptimalHP
                         //Loop thru all possible safe values and compare heuristic values, tally up the probability of a better value hitting
                         int prob = 0, countBetter = 0;
                         double magicCalc = 1, amountGain = 0; //magicCalc is an attempt to combine the probability and amount of gained benefit from switching
-                        foreach (NodeLink child in current.ChildNodes)
+                        foreach (NodeLink link in current.ChildNodes)
                         {
-                            double diffMax = current.MaxPath.Resets - child.Child.MaxPath.Resets, diffMin = current.MinPath.Resets - child.Child.MinPath.Resets;
-                            if (child.Child.MinPath.Resets < value)
+                            double diffMax = current.MaxPath.Resets - link.Child.MaxPath.Resets, diffMin = current.MinPath.Resets - link.Child.MinPath.Resets;
+                            if (link.Child.MinPath.Resets + ((256.0 / link.Prob) - 1) < value)
                             {
                                 countBetter++;
-                                prob += child.Prob;
-                                amountGain += (value - child.Child.MinPath.Resets);
+                                prob += link.Prob;
+                                amountGain += (value - link.Child.MinPath.Resets);
                                 //magicCalc *= ((value - child.Item1.MinPath.Resets) * (child.Item4 / 256.0));
                                 break;
                             }
@@ -401,11 +408,8 @@ namespace FF7OptimalHP
         public int SimulateMaxSafeOnly()
         {
             int countResets = 0;
-
             Node current = c.ActiveTree.RootNode;
-
             string output = String.Format("Level {0} ({1}/{2})", current.Level, current.HP, current.MP);
-
             bool shouldPrintLevel = false;
 
             while (current.Level < Controller.MAX_LEVEL)

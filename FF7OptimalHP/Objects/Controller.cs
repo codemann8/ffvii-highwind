@@ -118,7 +118,7 @@ namespace FF7OptimalHP.Objects
 
             if (!success && CharacterTrees.TryGetValue(character.GetFilenamePrefix(), out tree))
             {
-                if (tree.LevelIndex[value / 10000000 - 1].TryGetValue(value % 10000000, out tree.SelectedNode))
+                if (tree.LevelIndex[value / 10000000 - 1].TryGetValue(value % 10000000, out tree.RootNode))
                 {
                     success = true;
                 }

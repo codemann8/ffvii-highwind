@@ -11,7 +11,7 @@ namespace FF7OptimalHP.Objects
     {
         public Character Character;
 
-        public Node RootNode, SelectedNode;
+        public Node RootNode;
 
         public SortedDictionary<int, Node>[] LevelIndex;
 
@@ -275,19 +275,19 @@ namespace FF7OptimalHP.Objects
 
         public void TrimUpToSelectedNode()
         {
-            if (SelectedNode != null)
+            if (RootNode != null)
             {
-                foreach (KeyValuePair<int, Node> entry in LevelIndex[SelectedNode.Level - 1].ToList())
+                foreach (KeyValuePair<int, Node> entry in LevelIndex[RootNode.Level - 1].ToList())
                 {
-                    if (entry.Value.HP != SelectedNode.HP || entry.Value.MP != SelectedNode.MP)
+                    if (entry.Value.HP != RootNode.HP || entry.Value.MP != RootNode.MP)
                     {
-                        LevelIndex[SelectedNode.Level - 1].Remove(entry.Key);
+                        LevelIndex[RootNode.Level - 1].Remove(entry.Key);
                         entry.Value.Delete();
                     }
                 }
             }
 
-            PruneTree(SelectedNode.Level);
+            PruneTree(RootNode.Level);
         }
 
         public void FindMinMaxPath()
@@ -300,7 +300,7 @@ namespace FF7OptimalHP.Objects
                     entry.Value.MaxPath = new Path();
                 }
 
-                for (int l = Controller.MAX_LEVEL - 1; l > Character.StartLevel - 1; --l)
+                for (int l = Controller.MAX_LEVEL - 1; l > RootNode.Level - 1; --l)
                 {
                     foreach (KeyValuePair<int, Node> entry in LevelIndex[l])
                     {
@@ -355,7 +355,7 @@ namespace FF7OptimalHP.Objects
                     }
                 }
 
-                for (int l = SelectedNode.Level - 1; l < Controller.MAX_LEVEL; l++)
+                for (int l = RootNode.Level - 1; l < Controller.MAX_LEVEL; l++)
                 {
                     foreach (KeyValuePair<int, Node> entry in LevelIndex[l])
                     {
@@ -376,36 +376,36 @@ namespace FF7OptimalHP.Objects
                     }
                 }
 
-                if (SelectedNode.MinPath == null)
+                if (RootNode.MinPath == null)
                 {
                     Path p = new Path();
 
-                    foreach (NodeLink link in SelectedNode.ChildNodes[0].Child.MinPath.PathList)
+                    foreach (NodeLink link in RootNode.ChildNodes[0].Child.MinPath.PathList)
                     {
                         p.PathList.AddLast(link);
                     }
-                    p.PathList.AddLast(SelectedNode.ChildNodes[0]);
-                    p.Resets = SelectedNode.ChildNodes[0].Child.MinPath.Resets;
+                    p.PathList.AddLast(RootNode.ChildNodes[0]);
+                    p.Resets = RootNode.ChildNodes[0].Child.MinPath.Resets;
 
-                    SelectedNode.MinPath = p;
+                    RootNode.MinPath = p;
                 }
 
-                if (SelectedNode.MaxPath == null)
+                if (RootNode.MaxPath == null)
                 {
                     Path p = new Path();
 
-                    foreach (NodeLink link in SelectedNode.ChildNodes[0].Child.MaxPath.PathList)
+                    foreach (NodeLink link in RootNode.ChildNodes[0].Child.MaxPath.PathList)
                     {
                         p.PathList.AddLast(link);
                     }
-                    p.PathList.AddLast(SelectedNode.ChildNodes[0]);
-                    p.Resets = SelectedNode.ChildNodes[0].Child.MaxPath.Resets;
+                    p.PathList.AddLast(RootNode.ChildNodes[0]);
+                    p.Resets = RootNode.ChildNodes[0].Child.MaxPath.Resets;
 
-                    SelectedNode.MaxPath = p;
+                    RootNode.MaxPath = p;
                 }
 
-                SelectedNode.MinPath.Chances = 256;
-                SelectedNode.MaxPath.Chances = 256;
+                RootNode.MinPath.Chances = 256;
+                RootNode.MaxPath.Chances = 256;
             }
 
             /*string fileName = String.Format("{0}\\FF7\\{1}.txt", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), Character.Name.ToLower().Replace(" ", string.Empty));

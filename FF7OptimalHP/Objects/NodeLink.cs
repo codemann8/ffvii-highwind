@@ -20,5 +20,17 @@ namespace FF7OptimalHP.Objects
             MPRNG = mprng;
             Prob = prob;
         }
+
+        public override string ToString()
+        {
+            string result = String.Format("Lv{0} ({1} / {2})", Child.Level, Child.HP, Child.MP);
+
+            if (Child.MinPath != null && Child.MaxPath != null)
+            {
+                result += String.Format(" {0:0.00}% chance [{1:0.00} - {2:0.00} resets]", (Prob == 255 ? 256 : Prob) * 100 / 256.0, Child.MinPath.Resets, Child.MaxPath.Resets);
+            }
+
+            return result;
+        }
     }
 }
