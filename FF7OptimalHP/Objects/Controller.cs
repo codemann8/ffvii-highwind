@@ -32,8 +32,6 @@ namespace FF7OptimalHP.Objects
 
         public Dictionary<string, int> Memory;
 
-        public DateTime StartTime;
-
         public Controller()
         {
             CharacterTrees = new Dictionary<string, CharacterTree>();
@@ -52,16 +50,14 @@ namespace FF7OptimalHP.Objects
             }
         }
 
-        public void Run()
+        public void BuildTree()
         {
-            StartTime = DateTime.Now;
-
             ActiveTree.AddLevelDepthFirst(ActiveTree.RootNode);
         }
 
         public void LoadSettings()
         {
-            string fileName = String.Format("{0}\\FFVIICache\\app.settings", AppDomain.CurrentDomain.BaseDirectory);
+            string fileName = String.Format(@"{0}\FFVIICache\app.settings", AppDomain.CurrentDomain.BaseDirectory);
                 
             if (File.Exists(fileName))
             {
@@ -77,7 +73,7 @@ namespace FF7OptimalHP.Objects
         {
             if (Memory != null)
             {
-                string fileName = String.Format("{0}\\FFVIICache\\app.settings", AppDomain.CurrentDomain.BaseDirectory);
+                string fileName = String.Format(@"{0}\FFVIICache\app.settings", AppDomain.CurrentDomain.BaseDirectory);
 
                 if (!Directory.Exists(fileName.Substring(0, fileName.LastIndexOf(@"\"))))
                 {
@@ -105,6 +101,41 @@ namespace FF7OptimalHP.Objects
             Memory.TryGetValue(character.GetFilenamePrefix(), out ret);
 
             return ret;
+        }
+
+        public bool SetMemory(Character character, int value)
+        {
+            bool success = false;
+
+            int ret = 0;
+
+            CharacterTree tree;
+
+            if (value == 0)
+            {
+                success = true;
+            }
+
+            if (!success && CharacterTrees.TryGetValue(character.GetFilenamePrefix(), out tree))
+            {
+                if (tree.LevelIndex[value / 10000000 - 1].TryGetValue(value % 10000000, out tree.SelectedNode))
+                {
+                    success = true;
+                }
+            }
+
+            if (success)
+            {
+                if (Memory.TryGetValue(character.GetFilenamePrefix(), out ret))
+                {
+                    Memory.Remove(character.GetFilenamePrefix());
+                }
+
+                Memory.Add(character.GetFilenamePrefix(), value);
+                SaveSettings();
+            }
+
+            return success;
         }
     }
 }

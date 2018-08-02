@@ -12,16 +12,9 @@ namespace FF7OptimalHP.Objects
         public ushort HP;
         public ushort MP;
 
-        /*public byte HPRNG { get { return ParentNodes[0].Item2; } }
-        public byte MPRNG { get { return ParentNodes[0].Item3; } }
-        //public System.Numerics.BigInteger Probability;
-        public double ResetsLikely { get { return ParentNodes[0].Item4; } }
+        public List<NodeLink> ParentNodes;
 
-        public Node ParentNode { get { return ParentNodes[0].Item1; } }*/
-
-        public List<Tuple<Node, byte, byte, byte>> ParentNodes;
-
-        public List<Tuple<Node, byte, byte, byte>> ChildNodes;
+        public List<NodeLink> ChildNodes;
 
         public Path MinPath, MaxPath;
 
@@ -32,11 +25,11 @@ namespace FF7OptimalHP.Objects
 
         }
 
-        public Tuple<Node, byte, byte, byte> FindParent(Node node)
+        public NodeLink FindParent(Node node)
         {
-            foreach (Tuple<Node, byte, byte, byte> parent in ParentNodes)
+            foreach (NodeLink parent in ParentNodes)
             {
-                if (node.HP == parent.Item1.HP && node.MP == parent.Item1.MP)
+                if (node.HP == parent.Parent.HP && node.MP == parent.Parent.MP)
                 {
                     return parent;
                 }
@@ -45,11 +38,11 @@ namespace FF7OptimalHP.Objects
             return null;
         }
 
-        public Tuple<Node, byte, byte, byte> FindChild(Node node)
+        public NodeLink FindChild(Node node)
         {
-            foreach (Tuple<Node, byte, byte, byte> child in ChildNodes)
+            foreach (NodeLink child in ChildNodes)
             {
-                if (node.HP == child.Item1.HP && node.MP == child.Item1.MP)
+                if (node.HP == child.Child.HP && node.MP == child.Child.MP)
                 {
                     return child;
                 }
@@ -74,9 +67,9 @@ namespace FF7OptimalHP.Objects
         {
             ushort prob = 0;
 
-            foreach (Tuple<Node, byte, byte, byte> child in ChildNodes)
+            foreach (NodeLink child in ChildNodes)
             {
-                prob += child.Item4;
+                prob += child.Prob;
             }
 
             return (byte)(prob > 255 ? 255 : prob);
@@ -87,15 +80,15 @@ namespace FF7OptimalHP.Objects
             //remove this child reference from all parents
             if (ParentNodes != null)
             {
-                foreach (Tuple<Node, byte, byte, byte> t in ParentNodes)
+                foreach (NodeLink childLink in ParentNodes)
                 {
-                    if (t.Item1 != null)
+                    if (childLink.Parent != null)
                     {
-                        foreach (Tuple<Node, byte, byte, byte> child in t.Item1.ChildNodes)
+                        foreach (NodeLink parentLink in childLink.Parent.ChildNodes.ToList())
                         {
-                            if (child.Item1.HP == HP && child.Item1.MP == MP)
+                            if (parentLink.Child.HP == HP && parentLink.Child.MP == MP)
                             {
-                                t.Item1.ChildNodes.Remove(child);
+                                childLink.Parent.ChildNodes.Remove(parentLink);
                                 break;
                             }
                         }
@@ -106,15 +99,15 @@ namespace FF7OptimalHP.Objects
             //remove this parent reference from all children
             if (ChildNodes != null)
             {
-                foreach (Tuple<Node, byte, byte, byte> child in ChildNodes)
+                foreach (NodeLink parentLink in ChildNodes)
                 {
-                    if (child.Item1 != null)
+                    if (parentLink.Child != null)
                     {
-                        foreach (Tuple<Node, byte, byte, byte> t in child.Item1.ParentNodes)
+                        foreach (NodeLink childLink in parentLink.Child.ParentNodes.ToList())
                         {
-                            if (t.Item1.HP == HP && t.Item1.MP == MP)
+                            if (childLink.Parent.HP == HP && childLink.Parent.MP == MP)
                             {
-                                child.Item1.ParentNodes.Remove(t);
+                                parentLink.Child.ParentNodes.Remove(childLink);
                                 break;
                             }
                         }
@@ -122,8 +115,8 @@ namespace FF7OptimalHP.Objects
                 }
             }
 
-            ParentNodes = new List<Tuple<Node, byte, byte, byte>>();
-            ChildNodes = new List<Tuple<Node, byte, byte, byte>>();
+            ParentNodes = new List<NodeLink>();
+            ChildNodes = new List<NodeLink>();
         }
     }
 }

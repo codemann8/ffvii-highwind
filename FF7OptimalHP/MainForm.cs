@@ -16,8 +16,6 @@ namespace FF7OptimalHP
     {
         private Controller c;
 
-        private Character chr;
-
         public MainForm()
         {
             InitializeComponent();
@@ -25,24 +23,111 @@ namespace FF7OptimalHP
             c = new Controller();
         }
 
-        private void treePath_BeforeExpand(object sender, TreeViewCancelEventArgs e)
+        private void grpCharacters_CheckedChanged(object sender, EventArgs e)
         {
-            if (e.Node.Nodes[0].Text == "")
-            {
-                foreach (Tuple<Node, byte, byte, byte> child in ((Node)(e.Node.Tag)).ChildNodes)
-                {
-                    if (child.Item1 != null)
-                    {
-                        TreeNode node = new TreeNode(child.Item1.ToString());
-                        node.Tag = child.Item1;
-                        node.Nodes.Add(new TreeNode(""));
+            RadioButton radio = (RadioButton)sender;
 
-                        e.Node.Nodes.Add(node);
-                    }
+            if (radio.Checked)
+            {
+                switch (radio.Name)
+                {
+                    case "rdoCloud":
+                        c.InitCharacter(new CloudCharacter());
+                        break;
+                    case "rdoBarret":
+                        c.InitCharacter(new BarretCharacter());
+                        break;
+                    case "rdoTifa":
+                        c.InitCharacter(new TifaCharacter());
+                        break;
+                    case "rdoAeris":
+                        c.InitCharacter(new AerisCharacter());
+                        break;
+                    case "rdoRed":
+                        c.InitCharacter(new RedCharacter());
+                        break;
+                    case "rdoYuffie":
+                        c.InitCharacter(new YuffieCharacter());
+                        break;
+                    case "rdoCait":
+                        c.InitCharacter(new CaitCharacter());
+                        break;
+                    case "rdoVincent":
+                        c.InitCharacter(new VincentCharacter());
+                        break;
+                    case "rdoCid":
+                        c.InitCharacter(new CidCharacter());
+                        break;
                 }
 
-                e.Node.Nodes.RemoveAt(0);
+                cboLevel.Items.Clear();
+                for (byte l = c.ActiveTree.Character.StartLevel; l <= Controller.MAX_LEVEL; l++)
+                {
+                    cboLevel.Items.Add(l);
+                }
+
+                treePath.Enabled = false;
+                Application.DoEvents();
+
+                LoadTree();
+
+                treePath.Enabled = true;
+                btnClear.Enabled = true;
+                btnSet.Enabled = true;
             }
+        }
+
+        private void LoadTree()
+        {
+            if (c.ActiveTree.LevelIndex[Controller.MAX_LEVEL - 1].Count == 0)
+            {
+                stsStatus.BackColor = Color.Coral;
+
+                string fileName = String.Format(@"{0}\FFVIICache\{1}.hpmp", AppDomain.CurrentDomain.BaseDirectory, c.ActiveTree.Character.GetFilenamePrefix());
+
+                if (File.Exists(fileName))
+                {
+                    lblStatus.Text = "Loading...";
+                    Application.DoEvents();
+
+                    int memory = c.GetMemory(c.ActiveTree.Character);
+
+                    c.ActiveTree.ImportTree(fileName, memory);
+
+                    c.ActiveTree.SelectedNode = c.ActiveTree.RootNode;
+
+                    c.ActiveTree.TrimUpToSelectedNode();
+                }
+                else
+                {
+                    lblStatus.Text = "Building...";
+                    Application.DoEvents();
+
+                    c.BuildTree();
+
+                    lblStatus.Text = "Trimming...";
+                    Application.DoEvents();
+
+                    c.ActiveTree.RemoveSubPars();
+
+                    lblStatus.Text = "Saving...";
+                    Application.DoEvents();
+
+                    c.ActiveTree.ExportTree(fileName);
+
+                    c.ActiveTree.SelectedNode = c.ActiveTree.RootNode;
+                }
+
+                lblStatus.Text = "Analyzing...";
+                Application.DoEvents();
+
+                c.ActiveTree.FindMinMaxPath();
+
+                lblStatus.Text = "Idle";
+                stsStatus.BackColor = SystemColors.Control;
+            }
+
+            RefreshTree();
         }
 
         private void RefreshTree()
@@ -69,180 +154,24 @@ namespace FF7OptimalHP
             treePath.Nodes[0].Expand();
         }
 
-        private void LoadDefaultTree()
+        private void treePath_BeforeExpand(object sender, TreeViewCancelEventArgs e)
         {
-            if (c.ActiveTree.LevelIndex[Controller.MAX_LEVEL - 1].Count == 0)
+            if (e.Node.Nodes[0].Text == "")
             {
-                stsStatus.BackColor = Color.Coral;
-
-                int value = c.GetMemory(c.ActiveTree.Character);
-
-                string fileName = String.Format("{0}\\FFVIICache\\{1}.hpmp", AppDomain.CurrentDomain.BaseDirectory, c.ActiveTree.Character.GetFilenamePrefix());
-
-                if (File.Exists(fileName))
+                foreach (NodeLink child in ((Node)(e.Node.Tag)).ChildNodes)
                 {
-                    lblStatus.Text = "Loading...";
-                    Application.DoEvents();
-
-                    c.ActiveTree.ImportTree(fileName, value);
-
-                    c.ActiveTree.SelectedNode = c.ActiveTree.RootNode;
-
-                    c.ActiveTree.TrimUpToSelectedNode();
-                    c.ActiveTree.FindMinMaxPath();
-
-                    RefreshTree();
-                }
-                else
-                {
-                    lblStatus.Text = "Building...";
-                    Application.DoEvents();
-
-                    c.Run();
-
-                    lblStatus.Text = "Trimming...";
-                    Application.DoEvents();
-
-                    c.ActiveTree.RemoveSubPars();
-
-                    lblStatus.Text = "Saving...";
-                    Application.DoEvents();
-
-                    c.ActiveTree.ExportTree(fileName);
-
-                    c.ActiveTree.SelectedNode = c.ActiveTree.RootNode;
-
-                    if (value > 0)
+                    if (child.Child != null)
                     {
-                        ushort mp = (ushort)(value % 1000);
-                        value /= 1000;
-                        ushort hp = (ushort)(value % 10000);
-                        value /= 10000;
-                        byte level = (byte)value;
+                        TreeNode node = new TreeNode(child.Child.ToString());
+                        node.Tag = child.Child;
+                        node.Nodes.Add(new TreeNode(""));
 
-                        lblStatus.Text = "Setting...";
-                        Application.DoEvents();
-
-                        SetMemory(level, hp, mp);
-                    }
-                    else
-                    {
-                        RefreshTree();
+                        e.Node.Nodes.Add(node);
                     }
                 }
 
-                lblStatus.Text = "Idle";
-                stsStatus.BackColor = SystemColors.Control;
+                e.Node.Nodes.RemoveAt(0);
             }
-            else
-            {
-                RefreshTree();
-            }
-        }
-
-        private void SetMemory(byte level, ushort hp, ushort mp, bool save = false)
-        {
-            if (!c.ActiveTree.LevelIndex[level - 1].TryGetValue(hp * 1000 + mp, out c.ActiveTree.SelectedNode))
-            {
-                if (save)
-                {
-                    MessageBox.Show("The values entered are NOT safe values");
-                }
-
-                c.Memory.Remove(c.ActiveTree.Character.GetFilenamePrefix());
-                c.SaveSettings();
-            }
-            else
-            {
-                if (save)
-                {
-                    c.Memory.Remove(c.ActiveTree.Character.GetFilenamePrefix());
-                    c.Memory.Add(c.ActiveTree.Character.GetFilenamePrefix(), level * 10000000 + hp * 1000 + mp);
-                    c.SaveSettings();
-                }
-
-                c.ActiveTree.TrimUpToSelectedNode();
-                c.ActiveTree.FindMinMaxPath();
-
-                cboLevel.ResetText();
-                txtHP.Text = "";
-                txtMP.Text = "";
-            }
-
-            RefreshTree();
-        }
-
-        private void grpCharacters_CheckedChanged(object sender, EventArgs e)
-        {
-            RadioButton radio = (RadioButton)sender;
-
-            if (radio.Checked)
-            {
-                switch (radio.Name)
-                {
-                    case "rdoCloud":
-                        chr = new CloudCharacter();
-                        break;
-                    case "rdoBarret":
-                        chr = new BarretCharacter();
-                        break;
-                    case "rdoTifa":
-                        chr = new TifaCharacter();
-                        break;
-                    case "rdoAeris":
-                        chr = new AerisCharacter();
-                        break;
-                    case "rdoRed":
-                        chr = new RedCharacter();
-                        break;
-                    case "rdoYuffie":
-                        chr = new YuffieCharacter();
-                        break;
-                    case "rdoCait":
-                        chr = new CaitCharacter();
-                        break;
-                    case "rdoVincent":
-                        chr = new VincentCharacter();
-                        break;
-                    case "rdoCid":
-                        chr = new CidCharacter();
-                        break;
-                }
-
-                c.InitCharacter(chr);
-
-                cboLevel.Items.Clear();
-                for (byte l = c.ActiveTree.Character.StartLevel; l <= Controller.MAX_LEVEL; l++)
-                {
-                    cboLevel.Items.Add(l);
-                }
-
-                treePath.Enabled = false;
-
-                Application.DoEvents();
-
-                LoadDefaultTree();
-
-                treePath.Enabled = true;
-                btnClear.Enabled = true;
-                btnSet.Enabled = true;
-            }
-        }
-
-        private void btnClear_Click(object sender, EventArgs e)
-        {
-            stsStatus.BackColor = Color.Coral;
-            lblStatus.Text = "Resetting...";
-            Application.DoEvents();
-
-            SetMemory(1, 0, 0);
-
-            c.ActiveTree = new CharacterTree(c.ActiveTree.Character);
-
-            LoadDefaultTree();
-
-            lblStatus.Text = "Idle";
-            stsStatus.BackColor = SystemColors.Control;
         }
 
         private void btnSet_Click(object sender, EventArgs e)
@@ -253,22 +182,60 @@ namespace FF7OptimalHP
 
             byte level;
             ushort hp, mp;
+
+            bool success = false;
+
             if (Byte.TryParse(cboLevel.Text, out level) && level > 0 && UInt16.TryParse(txtHP.Text, out hp) && hp > 0 && UInt16.TryParse(txtMP.Text, out mp) && mp > 0)
             {
-                SetMemory(level, hp, mp, true);
+                if (c.SetMemory(c.ActiveTree.Character, level * 10000000 + hp * 1000 + mp))
+                {
+                    success = true;
+
+                    cboLevel.ResetText();
+                    txtHP.Text = "";
+                    txtMP.Text = "";
+                }
+                else
+                {
+                    MessageBox.Show("The values entered are NOT safe values");
+                }
             }
             else if (treePath.SelectedNode != null && treePath.SelectedNode.Tag != null)
             {
-                c.ActiveTree.SelectedNode = (Node)treePath.SelectedNode.Tag;
-                c.ActiveTree.TrimUpToSelectedNode();
-                c.ActiveTree.FindMinMaxPath();
+                success = true;
 
-                c.Memory.Remove(c.ActiveTree.Character.GetFilenamePrefix());
-                c.Memory.Add(c.ActiveTree.Character.GetFilenamePrefix(), c.ActiveTree.SelectedNode.Level * 10000000 + c.ActiveTree.SelectedNode.HP * 10000 + c.ActiveTree.SelectedNode.MP);
-                c.SaveSettings();
+                c.ActiveTree.SelectedNode = (Node)treePath.SelectedNode.Tag;
+
+                c.SetMemory(c.ActiveTree.Character, c.ActiveTree.SelectedNode.Level * 10000000 + c.ActiveTree.SelectedNode.HP * 1000 + c.ActiveTree.SelectedNode.MP);
+            }
+
+            if (success)
+            {
+                c.ActiveTree.TrimUpToSelectedNode();
+
+                lblStatus.Text = "Analyzing...";
+                Application.DoEvents();
+
+                c.ActiveTree.FindMinMaxPath();
 
                 RefreshTree();
             }
+
+            lblStatus.Text = "Idle";
+            stsStatus.BackColor = SystemColors.Control;
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            stsStatus.BackColor = Color.Coral;
+            lblStatus.Text = "Resetting...";
+            Application.DoEvents();
+
+            c.SetMemory(c.ActiveTree.Character, 0);
+
+            c.ActiveTree = new CharacterTree(c.ActiveTree.Character);
+
+            LoadTree();
 
             lblStatus.Text = "Idle";
             stsStatus.BackColor = SystemColors.Control;
@@ -356,14 +323,14 @@ namespace FF7OptimalHP
                     }
 
                     //Check if chosen value is safe
-                    Node tempCurrent = current;
+                    NodeLink chosenPath = null;
 
-                    foreach (Tuple<Node, byte, byte, byte> child in current.ChildNodes)
+                    foreach (NodeLink child in current.ChildNodes)
                     {
-                        if (child.Item1.HP == hps[rngIdx / 8] && child.Item1.MP == mps[rngIdx % 8])
+                        if (child.Child.HP == hps[rngIdx / 8] && child.Child.MP == mps[rngIdx % 8])
                         {
                             valueIsSafe = true;
-                            tempCurrent = child.Item1;
+                            chosenPath = child;
                             break;
                         }
                     }
@@ -374,22 +341,22 @@ namespace FF7OptimalHP
                         //MAKE MODS BELOW
                         //Calculate a heuristic value for the node in question
                         //double value = (current.MaxPath.Resets - tempCurrent.MaxPath.Resets) + (current.MinPath.Resets - tempCurrent.MinPath.Resets);
-                        double value = tempCurrent.MinPath.Resets;
+                        double value = chosenPath.Child.MinPath.Resets;
 
-                        //Item4 is the number of times out of 256 that this will hit, (256 / x) - 1 represents the probable number of resets needed to hit this
-                        //value -= ((256.0 / tempCurrent.FindParent(current).Item4) - 1);
+                        //Prob is the number of times out of 256 that this will hit, (256 / x) - 1 represents the probable number of resets needed to hit this
+                        //value -= ((256.0 / tempCurrent.FindParent(current).Prob) - 1);
 
                         //Loop thru all possible safe values and compare heuristic values, tally up the probability of a better value hitting
                         int prob = 0, countBetter = 0;
                         double magicCalc = 1, amountGain = 0; //magicCalc is an attempt to combine the probability and amount of gained benefit from switching
-                        foreach (Tuple<Node, byte, byte, byte> child in current.ChildNodes)
+                        foreach (NodeLink child in current.ChildNodes)
                         {
-                            double diffMax = current.MaxPath.Resets - child.Item1.MaxPath.Resets, diffMin = current.MinPath.Resets - child.Item1.MinPath.Resets;
-                            if (child.Item1.MinPath.Resets < value)
+                            double diffMax = current.MaxPath.Resets - child.Child.MaxPath.Resets, diffMin = current.MinPath.Resets - child.Child.MinPath.Resets;
+                            if (child.Child.MinPath.Resets < value)
                             {
                                 countBetter++;
-                                prob += child.Item4;
-                                amountGain += (value - child.Item1.MinPath.Resets);
+                                prob += child.Prob;
+                                amountGain += (value - child.Child.MinPath.Resets);
                                 //magicCalc *= ((value - child.Item1.MinPath.Resets) * (child.Item4 / 256.0));
                                 break;
                             }
@@ -411,7 +378,7 @@ namespace FF7OptimalHP
                     }
                     else
                     {
-                        current = tempCurrent;
+                        current = chosenPath.Child;
                     }
                 }
                 while (!valueIsSafe);
@@ -493,12 +460,12 @@ namespace FF7OptimalHP
                         shouldPrintLevel = true;
                     }
 
-                    foreach (Tuple<Node, byte, byte, byte> child in current.ChildNodes)
+                    foreach (NodeLink child in current.ChildNodes)
                     {
-                        if (child.Item1.HP == hps[rngIdx / 8] && child.Item1.MP == mps[rngIdx % 8])
+                        if (child.Child.HP == hps[rngIdx / 8] && child.Child.MP == mps[rngIdx % 8])
                         {
                             valueIsSafe = true;
-                            current = child.Item1;
+                            current = child.Child;
                             break;
                         }
                     }

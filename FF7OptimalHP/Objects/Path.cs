@@ -8,7 +8,7 @@ namespace FF7OptimalHP.Objects
 {
     public class Path
     {
-        public LinkedList<Node> PathList;
+        public LinkedList<NodeLink> PathList;
 
         public double Resets;
 
@@ -16,7 +16,7 @@ namespace FF7OptimalHP.Objects
 
         public Path()
         {
-            PathList = new LinkedList<Node>();
+            PathList = new LinkedList<NodeLink>();
         }
     }
 }
