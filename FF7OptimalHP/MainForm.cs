@@ -253,19 +253,35 @@ namespace FF7OptimalHP
 
         private void btnSimulate_Click(object sender, EventArgs e)
         {
+            stsStatus.BackColor = Color.Coral;
+            lblStatus.Text = "Simulating...";
+            Application.DoEvents();
+
             int numberOfSimulations = 10000;
             int countTotalResets = 0, minResets = 9999, maxResets = 0;
 
             for (int i = 0; i < numberOfSimulations; i++)
             {
-                //int resets = SimulateMaxSafeOnly();
-                int resets = SimulateMaxBetterSafe();
+                int resets = SimulateMaxSafeOnly();
                 countTotalResets += resets;
                 minResets = Math.Min(minResets, resets);
                 maxResets = Math.Max(maxResets, resets);
             }
 
-            MessageBox.Show(String.Format("{0} simulations, average {1:0.00} resets, range {2}-{3}", numberOfSimulations, countTotalResets / (double)numberOfSimulations, minResets, maxResets));
+            int countTotalResets2 = 0, minResets2 = 9999, maxResets2 = 0;
+
+            for (int i = 0; i < numberOfSimulations; i++)
+            {
+                int resets = SimulateMaxBetterSafe();
+                countTotalResets2 += resets;
+                minResets2 = Math.Min(minResets2, resets);
+                maxResets2 = Math.Max(maxResets2, resets);
+            }
+
+            MessageBox.Show(String.Format("{0} normal simulations, average {1:0.00} resets, range {2}-{3}\n{0} smart simulations, average {4:0.00} resets, range {5}-{6}", numberOfSimulations, countTotalResets / (double)numberOfSimulations, minResets, maxResets, countTotalResets2 / (double)numberOfSimulations, minResets2, maxResets2));
+
+            lblStatus.Text = "Idle";
+            stsStatus.BackColor = SystemColors.Control;
         }
 
         public int SimulateMaxBetterSafe()
@@ -274,6 +290,10 @@ namespace FF7OptimalHP
             Node current = c.ActiveTree.RootNode;
             string output = String.Format("Level {0} ({1}/{2})", current.Level, current.HP, current.MP);
             bool shouldPrintLevel = false;
+
+            System.Security.Cryptography.RNGCryptoServiceProvider provider = new System.Security.Cryptography.RNGCryptoServiceProvider();
+            byte[] rs = new byte[4];
+            byte randomPointer = 0;
 
             while (current.Level < Controller.MAX_LEVEL)
             {
@@ -308,10 +328,13 @@ namespace FF7OptimalHP
                     }
 
                     //Randomly choosing the next level value
-                    System.Security.Cryptography.RNGCryptoServiceProvider provider = new System.Security.Cryptography.RNGCryptoServiceProvider();
-                    byte[] rs = new byte[4];
-                    provider.GetBytes(rs);
-                    int r = rs[0];
+                    if (randomPointer > 3)
+                    {
+                        provider.GetBytes(rs);
+                        randomPointer = 0;
+                    }
+                    int r = rs[randomPointer];
+                    randomPointer++;
                     rngIdx = 1;
                     while (r > 0)
                     {
@@ -348,10 +371,10 @@ namespace FF7OptimalHP
                         //MAKE MODS BELOW
                         //Calculate a heuristic value for the node in question
                         //double value = (current.MaxPath.Resets - tempCurrent.MaxPath.Resets) + (current.MinPath.Resets - tempCurrent.MinPath.Resets);
-                        double value = chosenPath.Child.MinPath.Resets;
+                        double value = (chosenPath.Child.MinPath.Resets + chosenPath.Child.MaxPath.Resets) / 2;
 
                         //Prob is the number of times out of 256 that this will hit, (256 / x) - 1 represents the probable number of resets needed to hit this
-                        //value -= ((256.0 / tempCurrent.FindParent(current).Prob) - 1);
+                        //value -= ((256.0 / chosenPath.Prob) - 1);
 
                         //Loop thru all possible safe values and compare heuristic values, tally up the probability of a better value hitting
                         int prob = 0, countBetter = 0;
@@ -359,12 +382,12 @@ namespace FF7OptimalHP
                         foreach (NodeLink link in current.ChildNodes)
                         {
                             double diffMax = current.MaxPath.Resets - link.Child.MaxPath.Resets, diffMin = current.MinPath.Resets - link.Child.MinPath.Resets;
-                            if (link.Child.MinPath.Resets + ((256.0 / link.Prob) - 1) < value)
+                            if (((link.Child.MinPath.Resets + link.Child.MaxPath.Resets) / 2) + ((256.0 / link.Prob) - 1) < value)
                             {
                                 countBetter++;
                                 prob += link.Prob;
-                                amountGain += (value - link.Child.MinPath.Resets);
-                                //magicCalc *= ((value - child.Item1.MinPath.Resets) * (child.Item4 / 256.0));
+                                amountGain += ((value - ((link.Child.MinPath.Resets + link.Child.MaxPath.Resets) / 2)) - ((256.0 / link.Prob) - 1));
+                                //magicCalc *= ((value - link.Child.MinPath.Resets) * (link.Prob / 256.0));
                                 break;
                             }
                         }
@@ -412,6 +435,10 @@ namespace FF7OptimalHP
             string output = String.Format("Level {0} ({1}/{2})", current.Level, current.HP, current.MP);
             bool shouldPrintLevel = false;
 
+            System.Security.Cryptography.RNGCryptoServiceProvider provider = new System.Security.Cryptography.RNGCryptoServiceProvider();
+            byte[] rs = new byte[4];
+            byte randomPointer = 0;
+
             while (current.Level < Controller.MAX_LEVEL)
             {
                 bool valueIsSafe = false;
@@ -438,10 +465,13 @@ namespace FF7OptimalHP
                         mps[m] = (ushort)Math.Min(current.MP + (ushort)((((ushort)((current.Level + 1) * table.MP_GRADIENT / 10) - (ushort)(current.Level * table.MP_GRADIENT / 10)) * Controller.MP_GAIN[Math.Min(Math.Max((int)((m + 1) + mpDiffBase), 0), 11)]) / 100), 999);
                     }
 
-                    System.Security.Cryptography.RNGCryptoServiceProvider provider = new System.Security.Cryptography.RNGCryptoServiceProvider();
-                    byte[] rs = new byte[4];
-                    provider.GetBytes(rs);
-                    int r = rs[0];
+                    if (randomPointer > 3)
+                    {
+                        provider.GetBytes(rs);
+                        randomPointer = 0;
+                    }
+                    int r = rs[randomPointer];
+                    randomPointer++;
                     rngIdx = 1;
                     while (r > 0)
                     {
