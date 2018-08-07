@@ -290,6 +290,15 @@ namespace FF7OptimalHP.Objects
             PruneTree(RootNode.Level);
         }
 
+        public Node FindNode(byte level, ushort hp, ushort mp)
+        {
+            Node ret = null;
+
+            LevelIndex[level - 1].TryGetValue(hp * 10000 + mp, out ret);
+
+            return ret;
+        }
+
         public void FindMinMaxPath()
         {
             if (RootNode.MinPath == null)

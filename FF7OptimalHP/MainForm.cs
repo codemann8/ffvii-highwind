@@ -196,6 +196,8 @@ namespace FF7OptimalHP
                 {
                     success = true;
 
+                    c.ActiveTree.RootNode = c.ActiveTree.FindNode(level, hp, mp);
+
                     cboLevel.ResetText();
                     txtHP.Text = "";
                     txtMP.Text = "";
