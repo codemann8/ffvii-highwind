@@ -294,7 +294,7 @@ namespace FF7OptimalHP.Objects
         {
             Node ret = null;
 
-            LevelIndex[level - 1].TryGetValue(hp * 10000 + mp, out ret);
+            LevelIndex[level - 1].TryGetValue(hp * 1000 + mp, out ret);
 
             return ret;
         }
