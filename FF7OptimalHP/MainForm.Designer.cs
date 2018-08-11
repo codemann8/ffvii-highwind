@@ -50,16 +50,27 @@
             this.stsStatus = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.btnSimulate = new System.Windows.Forms.Button();
+            this.spltLeftRight = new System.Windows.Forms.SplitContainer();
+            this.spltTopBottom = new System.Windows.Forms.SplitContainer();
             this.grpCharacters.SuspendLayout();
             this.stsStatus.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.spltLeftRight)).BeginInit();
+            this.spltLeftRight.Panel1.SuspendLayout();
+            this.spltLeftRight.Panel2.SuspendLayout();
+            this.spltLeftRight.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.spltTopBottom)).BeginInit();
+            this.spltTopBottom.Panel1.SuspendLayout();
+            this.spltTopBottom.Panel2.SuspendLayout();
+            this.spltTopBottom.SuspendLayout();
             this.SuspendLayout();
             // 
             // treePath
             // 
-            this.treePath.Location = new System.Drawing.Point(164, 79);
+            this.treePath.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treePath.Location = new System.Drawing.Point(0, 0);
             this.treePath.Margin = new System.Windows.Forms.Padding(4);
             this.treePath.Name = "treePath";
-            this.treePath.Size = new System.Drawing.Size(868, 688);
+            this.treePath.Size = new System.Drawing.Size(884, 697);
             this.treePath.TabIndex = 9;
             this.treePath.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.treePath_BeforeExpand);
             // 
@@ -74,7 +85,7 @@
             this.grpCharacters.Controls.Add(this.rdoTifa);
             this.grpCharacters.Controls.Add(this.rdoBarret);
             this.grpCharacters.Controls.Add(this.rdoCloud);
-            this.grpCharacters.Location = new System.Drawing.Point(12, 13);
+            this.grpCharacters.Location = new System.Drawing.Point(4, 4);
             this.grpCharacters.Margin = new System.Windows.Forms.Padding(4);
             this.grpCharacters.Name = "grpCharacters";
             this.grpCharacters.Padding = new System.Windows.Forms.Padding(4);
@@ -194,7 +205,7 @@
             // btnClear
             // 
             this.btnClear.Enabled = false;
-            this.btnClear.Location = new System.Drawing.Point(164, 12);
+            this.btnClear.Location = new System.Drawing.Point(4, 4);
             this.btnClear.Margin = new System.Windows.Forms.Padding(4);
             this.btnClear.Name = "btnClear";
             this.btnClear.Size = new System.Drawing.Size(148, 62);
@@ -206,7 +217,7 @@
             // btnSet
             // 
             this.btnSet.Enabled = false;
-            this.btnSet.Location = new System.Drawing.Point(886, 12);
+            this.btnSet.Location = new System.Drawing.Point(713, 5);
             this.btnSet.Margin = new System.Windows.Forms.Padding(4);
             this.btnSet.Name = "btnSet";
             this.btnSet.Size = new System.Drawing.Size(148, 60);
@@ -219,7 +230,7 @@
             // 
             this.cboLevel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cboLevel.FormattingEnabled = true;
-            this.cboLevel.Location = new System.Drawing.Point(404, 12);
+            this.cboLevel.Location = new System.Drawing.Point(244, 4);
             this.cboLevel.Margin = new System.Windows.Forms.Padding(4);
             this.cboLevel.Name = "cboLevel";
             this.cboLevel.Size = new System.Drawing.Size(88, 45);
@@ -228,7 +239,7 @@
             // txtHP
             // 
             this.txtHP.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtHP.Location = new System.Drawing.Point(568, 12);
+            this.txtHP.Location = new System.Drawing.Point(408, 4);
             this.txtHP.Margin = new System.Windows.Forms.Padding(4);
             this.txtHP.Name = "txtHP";
             this.txtHP.Size = new System.Drawing.Size(100, 44);
@@ -237,7 +248,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(328, 29);
+            this.label1.Location = new System.Drawing.Point(168, 21);
             this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(70, 25);
@@ -247,7 +258,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(514, 29);
+            this.label2.Location = new System.Drawing.Point(354, 21);
             this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(47, 25);
@@ -257,7 +268,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(692, 31);
+            this.label3.Location = new System.Drawing.Point(532, 23);
             this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(50, 25);
@@ -267,7 +278,7 @@
             // txtMP
             // 
             this.txtMP.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtMP.Location = new System.Drawing.Point(744, 12);
+            this.txtMP.Location = new System.Drawing.Point(584, 4);
             this.txtMP.Margin = new System.Windows.Forms.Padding(4);
             this.txtMP.Name = "txtMP";
             this.txtMP.Size = new System.Drawing.Size(100, 44);
@@ -296,32 +307,70 @@
             // 
             // btnSimulate
             // 
-            this.btnSimulate.Location = new System.Drawing.Point(12, 693);
+            this.btnSimulate.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.btnSimulate.Location = new System.Drawing.Point(0, 709);
             this.btnSimulate.Margin = new System.Windows.Forms.Padding(4);
             this.btnSimulate.Name = "btnSimulate";
-            this.btnSimulate.Size = new System.Drawing.Size(144, 62);
+            this.btnSimulate.Size = new System.Drawing.Size(156, 62);
             this.btnSimulate.TabIndex = 11;
             this.btnSimulate.Text = "Simulate";
             this.btnSimulate.UseVisualStyleBackColor = true;
             this.btnSimulate.Click += new System.EventHandler(this.btnSimulate_Click);
+            // 
+            // spltLeftRight
+            // 
+            this.spltLeftRight.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.spltLeftRight.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
+            this.spltLeftRight.IsSplitterFixed = true;
+            this.spltLeftRight.Location = new System.Drawing.Point(0, 0);
+            this.spltLeftRight.Name = "spltLeftRight";
+            // 
+            // spltLeftRight.Panel1
+            // 
+            this.spltLeftRight.Panel1.Controls.Add(this.btnSimulate);
+            this.spltLeftRight.Panel1.Controls.Add(this.grpCharacters);
+            // 
+            // spltLeftRight.Panel2
+            // 
+            this.spltLeftRight.Panel2.Controls.Add(this.spltTopBottom);
+            this.spltLeftRight.Size = new System.Drawing.Size(1044, 771);
+            this.spltLeftRight.SplitterDistance = 156;
+            this.spltLeftRight.TabIndex = 16;
+            // 
+            // spltTopBottom
+            // 
+            this.spltTopBottom.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.spltTopBottom.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
+            this.spltTopBottom.IsSplitterFixed = true;
+            this.spltTopBottom.Location = new System.Drawing.Point(0, 0);
+            this.spltTopBottom.Name = "spltTopBottom";
+            this.spltTopBottom.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // spltTopBottom.Panel1
+            // 
+            this.spltTopBottom.Panel1.Controls.Add(this.btnSet);
+            this.spltTopBottom.Panel1.Controls.Add(this.btnClear);
+            this.spltTopBottom.Panel1.Controls.Add(this.txtHP);
+            this.spltTopBottom.Panel1.Controls.Add(this.label1);
+            this.spltTopBottom.Panel1.Controls.Add(this.label3);
+            this.spltTopBottom.Panel1.Controls.Add(this.label2);
+            this.spltTopBottom.Panel1.Controls.Add(this.txtMP);
+            this.spltTopBottom.Panel1.Controls.Add(this.cboLevel);
+            // 
+            // spltTopBottom.Panel2
+            // 
+            this.spltTopBottom.Panel2.Controls.Add(this.treePath);
+            this.spltTopBottom.Size = new System.Drawing.Size(884, 771);
+            this.spltTopBottom.SplitterDistance = 70;
+            this.spltTopBottom.TabIndex = 15;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1044, 808);
-            this.Controls.Add(this.btnSimulate);
+            this.Controls.Add(this.spltLeftRight);
             this.Controls.Add(this.stsStatus);
-            this.Controls.Add(this.label3);
-            this.Controls.Add(this.txtMP);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.txtHP);
-            this.Controls.Add(this.cboLevel);
-            this.Controls.Add(this.btnSet);
-            this.Controls.Add(this.btnClear);
-            this.Controls.Add(this.grpCharacters);
-            this.Controls.Add(this.treePath);
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "MainForm";
             this.Text = "FFVII Optimal Max HP/MP Helper";
@@ -329,6 +378,15 @@
             this.grpCharacters.PerformLayout();
             this.stsStatus.ResumeLayout(false);
             this.stsStatus.PerformLayout();
+            this.spltLeftRight.Panel1.ResumeLayout(false);
+            this.spltLeftRight.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.spltLeftRight)).EndInit();
+            this.spltLeftRight.ResumeLayout(false);
+            this.spltTopBottom.Panel1.ResumeLayout(false);
+            this.spltTopBottom.Panel1.PerformLayout();
+            this.spltTopBottom.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.spltTopBottom)).EndInit();
+            this.spltTopBottom.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -358,6 +416,8 @@
         private System.Windows.Forms.StatusStrip stsStatus;
         private System.Windows.Forms.ToolStripStatusLabel lblStatus;
         private System.Windows.Forms.Button btnSimulate;
+        private System.Windows.Forms.SplitContainer spltLeftRight;
+        private System.Windows.Forms.SplitContainer spltTopBottom;
     }
 }
 

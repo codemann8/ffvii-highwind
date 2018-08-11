@@ -20,6 +20,9 @@ namespace FF7OptimalHP
         {
             InitializeComponent();
 
+            spltLeftRight.SplitterDistance = 78;
+            spltTopBottom.SplitterDistance = 35;
+
             c = new Controller();
         }
 
