@@ -12,6 +12,8 @@ namespace FF7OptimalHP.Objects
 
         public byte HPRNG, MPRNG, Prob;
 
+        public double SimulatedResets;
+
         public NodeLink(Node parent, Node child, byte hprng, byte mprng, byte prob)
         {
             Parent = parent;
@@ -27,7 +29,14 @@ namespace FF7OptimalHP.Objects
 
             if (Child.MinPath != null && Child.MaxPath != null)
             {
-                result += String.Format(" {0:0.00}% chance [{1:0.00} - {2:0.00} resets]", (Prob == 255 ? 256 : Prob) * 100 / 256.0, Child.MinPath.Resets, Child.MaxPath.Resets);
+                if (SimulatedResets > 0)
+                {
+                    result += String.Format(" {0:0.00}% chance [{1:0.00} - ({2:0.00}) - {3:0.00} resets]", (Prob == 255 ? 256 : Prob) * 100 / 256.0, Child.MinPath.Resets, SimulatedResets, Child.MaxPath.Resets);
+                }
+                else
+                {
+                    result += String.Format(" {0:0.00}% chance [{1:0.00} - {2:0.00} resets]", (Prob == 255 ? 256 : Prob) * 100 / 256.0, Child.MinPath.Resets, Child.MaxPath.Resets);
+                }
             }
 
             return result;

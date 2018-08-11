@@ -280,6 +280,12 @@ namespace FF7OptimalHP
                 maxResets2 = Math.Max(maxResets2, resets);
             }
 
+            if (treePath.SelectedNode != null && treePath.SelectedNode.Tag != null && treePath.SelectedNode.Tag is NodeLink)
+            {
+                ((NodeLink)treePath.SelectedNode.Tag).SimulatedResets = countTotalResets2 / (double)numberOfSimulations;
+                treePath.SelectedNode.Text = ((NodeLink)treePath.SelectedNode.Tag).ToString();
+            }
+
             MessageBox.Show(String.Format("{0} normal simulations, average {1:0.00} resets, range {2}-{3}\n{0} smart simulations, average {4:0.00} resets, range {5}-{6}", numberOfSimulations, countTotalResets / (double)numberOfSimulations, minResets, maxResets, countTotalResets2 / (double)numberOfSimulations, minResets2, maxResets2));
 
             lblStatus.Text = "Idle";
