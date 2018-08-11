@@ -289,13 +289,27 @@ namespace FF7OptimalHP
         public int SimulateMaxBetterSafe()
         {
             int countResets = 0;
-            Node current = c.ActiveTree.RootNode;
-            string output = String.Format("Level {0} ({1}/{2})", current.Level, current.HP, current.MP);
-            bool shouldPrintLevel = false;
-
+            
             System.Security.Cryptography.RNGCryptoServiceProvider provider = new System.Security.Cryptography.RNGCryptoServiceProvider();
             byte[] rs = new byte[4];
             byte randomPointer = 0;
+
+            Node current = c.ActiveTree.RootNode;
+
+            if (treePath.SelectedNode != null && treePath.SelectedNode.Tag != null)
+            {
+                if (treePath.SelectedNode.Tag is Node)
+                {
+                    current = (Node)treePath.SelectedNode.Tag;
+                }
+                else if (treePath.SelectedNode.Tag is NodeLink)
+                {
+                    current = ((NodeLink)treePath.SelectedNode.Tag).Child;
+                }
+            }
+
+            string output = String.Format("Level {0} ({1}/{2})", current.Level, current.HP, current.MP);
+            bool shouldPrintLevel = false;
 
             while (current.Level < Controller.MAX_LEVEL)
             {
@@ -433,13 +447,27 @@ namespace FF7OptimalHP
         public int SimulateMaxSafeOnly()
         {
             int countResets = 0;
-            Node current = c.ActiveTree.RootNode;
-            string output = String.Format("Level {0} ({1}/{2})", current.Level, current.HP, current.MP);
-            bool shouldPrintLevel = false;
 
             System.Security.Cryptography.RNGCryptoServiceProvider provider = new System.Security.Cryptography.RNGCryptoServiceProvider();
             byte[] rs = new byte[4];
             byte randomPointer = 0;
+
+            Node current = c.ActiveTree.RootNode;
+
+            if (treePath.SelectedNode != null && treePath.SelectedNode.Tag != null)
+            {
+                if (treePath.SelectedNode.Tag is Node)
+                {
+                    current = (Node)treePath.SelectedNode.Tag;
+                }
+                else if (treePath.SelectedNode.Tag is NodeLink)
+                {
+                    current = ((NodeLink)treePath.SelectedNode.Tag).Child;
+                }
+            }
+
+            string output = String.Format("Level {0} ({1}/{2})", current.Level, current.HP, current.MP);
+            bool shouldPrintLevel = false;
 
             while (current.Level < Controller.MAX_LEVEL)
             {
