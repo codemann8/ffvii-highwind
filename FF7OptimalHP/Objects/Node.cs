@@ -18,6 +18,8 @@ namespace FF7OptimalHP.Objects
 
         public Path MinPath, MaxPath;
 
+        public double SimulatedResets;
+
         //public string Name { get { if (ParentNodes[0] != null) return this.ToString(); else return ""; } }
 
         public Node()
@@ -57,7 +59,14 @@ namespace FF7OptimalHP.Objects
 
             if (MinPath != null && MaxPath != null)
             {
-                result += String.Format(" {0:0.00}% chance [{1:0.00} - {2:0.00} resets]", (MinPath.Chances == 255 ? 256 : MinPath.Chances) * 100.0 / 256.0, MinPath.Resets, MaxPath.Resets);
+                if (SimulatedResets > 0)
+                {
+                    result += String.Format(" {0:0.00}% chance [{1:0.00} - ({2:0.00}) - {3:0.00} resets]", (MinPath.Chances == 255 ? 256 : MinPath.Chances) * 100.0 / 256.0, MinPath.Resets, SimulatedResets, MaxPath.Resets);
+                }
+                else
+                {
+                    result += String.Format(" {0:0.00}% chance [{1:0.00} - {2:0.00} resets]", (MinPath.Chances == 255 ? 256 : MinPath.Chances) * 100.0 / 256.0, MinPath.Resets, MaxPath.Resets);
+                }
             }
 
             return result;

@@ -262,60 +262,90 @@ namespace FF7OptimalHP
             lblStatus.Text = "Simulating...";
             Application.DoEvents();
 
-            int numberOfSimulations = 10000;
-            int countTotalResets = 0, minResets = 9999, maxResets = 0;
+            Node selectedNode = c.ActiveTree.RootNode;
 
-            for (int i = 0; i < numberOfSimulations; i++)
+            if (treePath.SelectedNode != null && treePath.SelectedNode.Tag != null)
             {
-                int resets = SimulateMaxSafeOnly();
-                countTotalResets += resets;
-                minResets = Math.Min(minResets, resets);
-                maxResets = Math.Max(maxResets, resets);
+                if (treePath.SelectedNode.Tag is Node)
+                {
+                    selectedNode = (Node)treePath.SelectedNode.Tag;
+                }
+                else if (treePath.SelectedNode.Tag is NodeLink)
+                {
+                    selectedNode = ((NodeLink)treePath.SelectedNode.Tag).Child;
+                }
             }
 
-            int countTotalResets2 = 0, minResets2 = 9999, maxResets2 = 0;
+            List<Node> nodes = new List<Node>();
 
-            for (int i = 0; i < numberOfSimulations; i++)
+            if (chkSimChildren.Checked)
             {
-                int resets = SimulateMaxBetterSafe();
-                countTotalResets2 += resets;
-                minResets2 = Math.Min(minResets2, resets);
-                maxResets2 = Math.Max(maxResets2, resets);
+                foreach (NodeLink link in selectedNode.ChildNodes)
+                {
+                    nodes.Add(link.Child);
+                }
+            }
+            else
+            {
+                nodes.Add(selectedNode);
+            }
+            foreach (Node node in nodes)
+            {
+                int numberOfSimulations = 10000;
+                int countTotalResets = 0, minResets = 9999, maxResets = 0;
+
+                for (int i = 0; i < numberOfSimulations; i++)
+                {
+                    int resets = SimulateMaxSafeOnly(node);
+                    countTotalResets += resets;
+                    minResets = Math.Min(minResets, resets);
+                    maxResets = Math.Max(maxResets, resets);
+                }
+
+                int countTotalResets2 = 0, minResets2 = 9999, maxResets2 = 0;
+
+                for (int i = 0; i < numberOfSimulations; i++)
+                {
+                    int resets = SimulateMaxBetterSafe(node);
+                    countTotalResets2 += resets;
+                    minResets2 = Math.Min(minResets2, resets);
+                    maxResets2 = Math.Max(maxResets2, resets);
+                }
+
+                node.SimulatedResets = Math.Min(countTotalResets / (double)numberOfSimulations, countTotalResets2 / (double)numberOfSimulations);
+
+                if (nodes.Count == 1)
+                {
+                    MessageBox.Show(String.Format("{0} normal simulations, average {1:0.00} resets, range {2}-{3}\n{0} smart simulations, average {4:0.00} resets, range {5}-{6}", numberOfSimulations, countTotalResets / (double)numberOfSimulations, minResets, maxResets, countTotalResets2 / (double)numberOfSimulations, minResets2, maxResets2));
+                }
             }
 
-            if (treePath.SelectedNode != null && treePath.SelectedNode.Tag != null && treePath.SelectedNode.Tag is NodeLink)
+            if (nodes.Count == 1)
             {
-                ((NodeLink)treePath.SelectedNode.Tag).SimulatedResets = countTotalResets2 / (double)numberOfSimulations;
-                treePath.SelectedNode.Text = ((NodeLink)treePath.SelectedNode.Tag).ToString();
+                treePath.SelectedNode.Text = selectedNode.ToString();
             }
-
-            MessageBox.Show(String.Format("{0} normal simulations, average {1:0.00} resets, range {2}-{3}\n{0} smart simulations, average {4:0.00} resets, range {5}-{6}", numberOfSimulations, countTotalResets / (double)numberOfSimulations, minResets, maxResets, countTotalResets2 / (double)numberOfSimulations, minResets2, maxResets2));
+            else
+            {
+                foreach (TreeNode child in treePath.SelectedNode.Nodes)
+                {
+                    if (child.Tag != null)
+                    {
+                        child.Text = child.Tag.ToString();
+                    }
+                }
+            }
 
             lblStatus.Text = "Idle";
             stsStatus.BackColor = SystemColors.Control;
         }
 
-        public int SimulateMaxBetterSafe()
+        public int SimulateMaxBetterSafe(Node current)
         {
             int countResets = 0;
             
             System.Security.Cryptography.RNGCryptoServiceProvider provider = new System.Security.Cryptography.RNGCryptoServiceProvider();
             byte[] rs = new byte[4];
             byte randomPointer = 0;
-
-            Node current = c.ActiveTree.RootNode;
-
-            if (treePath.SelectedNode != null && treePath.SelectedNode.Tag != null)
-            {
-                if (treePath.SelectedNode.Tag is Node)
-                {
-                    current = (Node)treePath.SelectedNode.Tag;
-                }
-                else if (treePath.SelectedNode.Tag is NodeLink)
-                {
-                    current = ((NodeLink)treePath.SelectedNode.Tag).Child;
-                }
-            }
 
             string output = String.Format("Level {0} ({1}/{2})", current.Level, current.HP, current.MP);
             bool shouldPrintLevel = false;
@@ -453,27 +483,13 @@ namespace FF7OptimalHP
             return countResets;
         }
 
-        public int SimulateMaxSafeOnly()
+        public int SimulateMaxSafeOnly(Node current)
         {
             int countResets = 0;
 
             System.Security.Cryptography.RNGCryptoServiceProvider provider = new System.Security.Cryptography.RNGCryptoServiceProvider();
             byte[] rs = new byte[4];
             byte randomPointer = 0;
-
-            Node current = c.ActiveTree.RootNode;
-
-            if (treePath.SelectedNode != null && treePath.SelectedNode.Tag != null)
-            {
-                if (treePath.SelectedNode.Tag is Node)
-                {
-                    current = (Node)treePath.SelectedNode.Tag;
-                }
-                else if (treePath.SelectedNode.Tag is NodeLink)
-                {
-                    current = ((NodeLink)treePath.SelectedNode.Tag).Child;
-                }
-            }
 
             string output = String.Format("Level {0} ({1}/{2})", current.Level, current.HP, current.MP);
             bool shouldPrintLevel = false;
