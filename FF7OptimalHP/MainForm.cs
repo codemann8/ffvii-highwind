@@ -77,6 +77,7 @@ namespace FF7OptimalHP
                 treePath.Enabled = true;
                 btnClear.Enabled = true;
                 btnSet.Enabled = true;
+                btnSimulate.Enabled = true;
             }
         }
 
@@ -326,7 +327,14 @@ namespace FF7OptimalHP
             }
             else
             {
-                foreach (TreeNode child in treePath.SelectedNode.Nodes)
+                TreeNode treeNode = treePath.Nodes[0];
+
+                if (treePath.SelectedNode != null)
+                {
+                    treeNode = treePath.SelectedNode;
+                }
+
+                foreach (TreeNode child in treeNode.Nodes)
                 {
                     if (child.Tag != null)
                     {

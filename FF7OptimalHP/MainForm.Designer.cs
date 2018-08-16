@@ -51,8 +51,8 @@
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.btnSimulate = new System.Windows.Forms.Button();
             this.spltLeftRight = new System.Windows.Forms.SplitContainer();
-            this.spltTopBottom = new System.Windows.Forms.SplitContainer();
             this.chkSimChildren = new System.Windows.Forms.CheckBox();
+            this.spltTopBottom = new System.Windows.Forms.SplitContainer();
             this.grpCharacters.SuspendLayout();
             this.stsStatus.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.spltLeftRight)).BeginInit();
@@ -309,6 +309,7 @@
             // btnSimulate
             // 
             this.btnSimulate.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.btnSimulate.Enabled = false;
             this.btnSimulate.Location = new System.Drawing.Point(0, 680);
             this.btnSimulate.Margin = new System.Windows.Forms.Padding(4);
             this.btnSimulate.Name = "btnSimulate";
@@ -339,6 +340,17 @@
             this.spltLeftRight.SplitterDistance = 156;
             this.spltLeftRight.TabIndex = 16;
             // 
+            // chkSimChildren
+            // 
+            this.chkSimChildren.AutoSize = true;
+            this.chkSimChildren.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.chkSimChildren.Location = new System.Drawing.Point(0, 742);
+            this.chkSimChildren.Name = "chkSimChildren";
+            this.chkSimChildren.Size = new System.Drawing.Size(156, 29);
+            this.chkSimChildren.TabIndex = 12;
+            this.chkSimChildren.Text = "Children";
+            this.chkSimChildren.UseVisualStyleBackColor = true;
+            // 
             // spltTopBottom
             // 
             this.spltTopBottom.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -365,17 +377,6 @@
             this.spltTopBottom.Size = new System.Drawing.Size(884, 771);
             this.spltTopBottom.SplitterDistance = 70;
             this.spltTopBottom.TabIndex = 15;
-            // 
-            // chkSimChildren
-            // 
-            this.chkSimChildren.AutoSize = true;
-            this.chkSimChildren.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.chkSimChildren.Location = new System.Drawing.Point(0, 742);
-            this.chkSimChildren.Name = "chkSimChildren";
-            this.chkSimChildren.Size = new System.Drawing.Size(156, 29);
-            this.chkSimChildren.TabIndex = 12;
-            this.chkSimChildren.Text = "Children";
-            this.chkSimChildren.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
