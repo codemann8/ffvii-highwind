@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FF7OptimalHP.Objects
+namespace FFVIIHighwind.Objects
 {
     public abstract class Character
     {

@@ -1,4 +1,4 @@
-﻿namespace FF7OptimalHP
+﻿namespace FFVIIHighwind
 {
     partial class MainForm
     {
@@ -387,7 +387,7 @@
             this.Controls.Add(this.stsStatus);
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "MainForm";
-            this.Text = "FFVII Optimal Max HP/MP Helper";
+            this.Text = "FFVII Highwind";
             this.grpCharacters.ResumeLayout(false);
             this.grpCharacters.PerformLayout();
             this.stsStatus.ResumeLayout(false);

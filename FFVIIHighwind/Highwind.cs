@@ -8,9 +8,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
-using FF7OptimalHP.Objects;
+using FFVIIHighwind.Objects;
 
-namespace FF7OptimalHP
+namespace FFVIIHighwind
 {
     public partial class MainForm : Form
     {
