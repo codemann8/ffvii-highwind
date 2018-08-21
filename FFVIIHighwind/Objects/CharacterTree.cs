@@ -460,6 +460,104 @@ namespace FFVIIHighwind.Objects
             File.WriteAllText(fileName, fileOut);*/
         }
 
+        public void FindProbableResets()
+        {
+            for (int l = Controller.MAX_LEVEL - 2; l >= RootNode.Level - 1; l--)
+            {
+                foreach (KeyValuePair<int, Node> entry in LevelIndex[l])
+                {
+                    entry.Value.ProbableResets = 0;
+
+                    int prob = 0;
+                    foreach (NodeLink link in entry.Value.ChildNodes)
+                    {
+                        prob += link.Prob;
+                    }
+
+                    entry.Value.ProbableResets = (256.0 / prob) - 1;
+
+                    foreach (NodeLink link in entry.Value.ChildNodes)
+                    {
+                        entry.Value.ProbableResets += (link.Prob / (double)prob) * link.Child.ProbableResets;
+                    }
+                }
+            }
+        }
+
+        public void FindSmartResets()
+        {
+            for (int l = Controller.MAX_LEVEL - 2; l >= RootNode.Level - 1; l--)
+            {
+                foreach (KeyValuePair<int, Node> entry in LevelIndex[l])
+                {
+                    int prob = 0;
+                    foreach (NodeLink link in entry.Value.ChildNodes)
+                    {
+                        prob += link.Prob;
+                    }
+
+                    entry.Value.SmartResets = (256.0 / prob) - 1;
+
+                    foreach (NodeLink link in entry.Value.ChildNodes)
+                    {
+                        entry.Value.SmartResets += (link.Prob / (double)prob) * link.Child.SmartResets;
+                    }
+
+                    List<NodeLink> children = entry.Value.ChildNodes.ToList();
+
+                    bool isChanged;
+                    do
+                    {
+                        isChanged = false;
+                        foreach (NodeLink link in children.ToList())
+                        {
+                            if (prob != link.Prob)
+                            {
+                                double resetsWithoutThisLink = ((entry.Value.SmartResets - ((256.0 / prob) - 1)) - ((link.Prob * link.Child.SmartResets) / (double)prob)) / ((prob - link.Prob) / (double)prob) + ((256.0 / (prob - link.Prob)) - 1);
+                                if (resetsWithoutThisLink + 3 < entry.Value.SmartResets)
+                                {
+                                    children.Remove(link);
+                                    link.Quality = Quality.Bad;
+                                    entry.Value.SmartResets = resetsWithoutThisLink;
+                                    prob -= link.Prob;
+
+                                    isChanged = true;
+                                }
+                            }
+                        }
+                    }
+                    while (isChanged);
+
+                    do
+                    {
+                        isChanged = false;
+                        foreach (NodeLink link in children.ToList())
+                        {
+                            if (prob != link.Prob)
+                            {
+                                double resetsWithoutThisLink = ((entry.Value.SmartResets - ((256.0 / prob) - 1)) - ((link.Prob * link.Child.SmartResets) / (double)prob)) / ((prob - link.Prob) / (double)prob) + ((256.0 / (prob - link.Prob)) - 1);
+                                if (resetsWithoutThisLink < entry.Value.SmartResets)
+                                {
+                                    children.Remove(link);
+                                    link.Quality = Quality.Questionable;
+                                    entry.Value.SmartResets = resetsWithoutThisLink;
+                                    prob -= link.Prob;
+
+                                    isChanged = true;
+                                }
+                            }
+                        }
+                    }
+                    while (isChanged);
+
+                    foreach (NodeLink link in children.ToList())
+                    {
+                        link.Quality = Quality.Good;
+                    }
+                }
+            }
+        }
+
         public void ExportTree(string fileName)
         {
             if (!Directory.Exists(fileName.Substring(0, fileName.LastIndexOf(@"\"))))

@@ -51,7 +51,6 @@
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.btnSimulate = new System.Windows.Forms.Button();
             this.spltLeftRight = new System.Windows.Forms.SplitContainer();
-            this.chkSimChildren = new System.Windows.Forms.CheckBox();
             this.spltTopBottom = new System.Windows.Forms.SplitContainer();
             this.grpCharacters.SuspendLayout();
             this.stsStatus.SuspendLayout();
@@ -310,7 +309,7 @@
             // 
             this.btnSimulate.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.btnSimulate.Enabled = false;
-            this.btnSimulate.Location = new System.Drawing.Point(0, 680);
+            this.btnSimulate.Location = new System.Drawing.Point(0, 709);
             this.btnSimulate.Margin = new System.Windows.Forms.Padding(4);
             this.btnSimulate.Name = "btnSimulate";
             this.btnSimulate.Size = new System.Drawing.Size(156, 62);
@@ -331,7 +330,6 @@
             // 
             this.spltLeftRight.Panel1.Controls.Add(this.btnSimulate);
             this.spltLeftRight.Panel1.Controls.Add(this.grpCharacters);
-            this.spltLeftRight.Panel1.Controls.Add(this.chkSimChildren);
             // 
             // spltLeftRight.Panel2
             // 
@@ -339,17 +337,6 @@
             this.spltLeftRight.Size = new System.Drawing.Size(1044, 771);
             this.spltLeftRight.SplitterDistance = 156;
             this.spltLeftRight.TabIndex = 16;
-            // 
-            // chkSimChildren
-            // 
-            this.chkSimChildren.AutoSize = true;
-            this.chkSimChildren.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.chkSimChildren.Location = new System.Drawing.Point(0, 742);
-            this.chkSimChildren.Name = "chkSimChildren";
-            this.chkSimChildren.Size = new System.Drawing.Size(156, 29);
-            this.chkSimChildren.TabIndex = 12;
-            this.chkSimChildren.Text = "Children";
-            this.chkSimChildren.UseVisualStyleBackColor = true;
             // 
             // spltTopBottom
             // 
@@ -393,7 +380,6 @@
             this.stsStatus.ResumeLayout(false);
             this.stsStatus.PerformLayout();
             this.spltLeftRight.Panel1.ResumeLayout(false);
-            this.spltLeftRight.Panel1.PerformLayout();
             this.spltLeftRight.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.spltLeftRight)).EndInit();
             this.spltLeftRight.ResumeLayout(false);
@@ -433,7 +419,6 @@
         private System.Windows.Forms.Button btnSimulate;
         private System.Windows.Forms.SplitContainer spltLeftRight;
         private System.Windows.Forms.SplitContainer spltTopBottom;
-        private System.Windows.Forms.CheckBox chkSimChildren;
     }
 }
 

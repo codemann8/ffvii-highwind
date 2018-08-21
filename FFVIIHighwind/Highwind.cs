@@ -116,10 +116,15 @@ namespace FFVIIHighwind
                     c.ActiveTree.ExportTree(fileName);
                 }
 
-                lblStatus.Text = "Analyzing...";
-                Application.DoEvents();
+                if (c.ActiveTree.RootNode.Level != c.ActiveTree.Character.StartLevel)
+                {
+                    lblStatus.Text = "Analyzing...";
+                    Application.DoEvents();
 
-                c.ActiveTree.FindMinMaxPath();
+                    c.ActiveTree.FindMinMaxPath();
+                    c.ActiveTree.FindProbableResets();
+                    c.ActiveTree.FindSmartResets();
+                }
 
                 lblStatus.Text = "Idle";
                 stsStatus.BackColor = SystemColors.Control;
@@ -174,6 +179,18 @@ namespace FFVIIHighwind
                         TreeNode node = new TreeNode(child.ToString());
                         node.Tag = child;
                         node.Nodes.Add(new TreeNode(""));
+                        switch (child.Quality)
+                        {
+                            case Quality.Good:
+                                node.ForeColor = Color.FromName("Green");
+                                break;
+                            case Quality.Bad:
+                                node.ForeColor = Color.FromName("Red");
+                                break;
+                            case Quality.Questionable:
+                                node.ForeColor = Color.FromName("Goldenrod");
+                                break;
+                        }
 
                         e.Node.Nodes.Add(node);
                     }
@@ -233,6 +250,8 @@ namespace FFVIIHighwind
                 Application.DoEvents();
 
                 c.ActiveTree.FindMinMaxPath();
+                c.ActiveTree.FindProbableResets();
+                c.ActiveTree.FindSmartResets();
 
                 RefreshTree();
             }
@@ -277,70 +296,38 @@ namespace FFVIIHighwind
                 }
             }
 
-            List<Node> nodes = new List<Node>();
+            int numberOfSimulations = 10000;
+            int countTotalResets = 0, minResets = 9999, maxResets = 0;
 
-            if (chkSimChildren.Checked)
+            for (int i = 0; i < numberOfSimulations; i++)
             {
-                foreach (NodeLink link in selectedNode.ChildNodes)
-                {
-                    nodes.Add(link.Child);
-                }
-            }
-            else
-            {
-                nodes.Add(selectedNode);
-            }
-            foreach (Node node in nodes)
-            {
-                int numberOfSimulations = 10000;
-                int countTotalResets = 0, minResets = 9999, maxResets = 0;
-
-                for (int i = 0; i < numberOfSimulations; i++)
-                {
-                    int resets = SimulateMaxSafeOnly(node);
-                    countTotalResets += resets;
-                    minResets = Math.Min(minResets, resets);
-                    maxResets = Math.Max(maxResets, resets);
-                }
-
-                int countTotalResets2 = 0, minResets2 = 9999, maxResets2 = 0;
-
-                for (int i = 0; i < numberOfSimulations; i++)
-                {
-                    int resets = SimulateMaxBetterSafe(node);
-                    countTotalResets2 += resets;
-                    minResets2 = Math.Min(minResets2, resets);
-                    maxResets2 = Math.Max(maxResets2, resets);
-                }
-
-                node.SimulatedResets = Math.Min(countTotalResets / (double)numberOfSimulations, countTotalResets2 / (double)numberOfSimulations);
-
-                if (nodes.Count == 1)
-                {
-                    MessageBox.Show(String.Format("{0} normal simulations, average {1:0.00} resets, range {2}-{3}\n{0} smart simulations, average {4:0.00} resets, range {5}-{6}", numberOfSimulations, countTotalResets / (double)numberOfSimulations, minResets, maxResets, countTotalResets2 / (double)numberOfSimulations, minResets2, maxResets2));
-                }
+                int resets = SimulateMaxSafeOnly(selectedNode);
+                countTotalResets += resets;
+                minResets = Math.Min(minResets, resets);
+                maxResets = Math.Max(maxResets, resets);
             }
 
-            if (nodes.Count == 1)
+            int countTotalResets2 = 0, minResets2 = 9999, maxResets2 = 0;
+
+            for (int i = 0; i < numberOfSimulations; i++)
+            {
+                int resets = SimulateMaxBetterSafe(selectedNode);
+                countTotalResets2 += resets;
+                minResets2 = Math.Min(minResets2, resets);
+                maxResets2 = Math.Max(maxResets2, resets);
+            }
+
+            selectedNode.SimulatedResets = countTotalResets2 / (double)numberOfSimulations;
+
+            MessageBox.Show(String.Format("{0} normal simulations, average {1:0.00} resets, range {2}-{3}\n{0} smart simulations, average {4:0.00} resets, range {5}-{6}", numberOfSimulations, countTotalResets / (double)numberOfSimulations, minResets, maxResets, countTotalResets2 / (double)numberOfSimulations, minResets2, maxResets2));
+
+            if (treePath.SelectedNode != null)
             {
                 treePath.SelectedNode.Text = selectedNode.ToString();
             }
             else
             {
-                TreeNode treeNode = treePath.Nodes[0];
-
-                if (treePath.SelectedNode != null)
-                {
-                    treeNode = treePath.SelectedNode;
-                }
-
-                foreach (TreeNode child in treeNode.Nodes)
-                {
-                    if (child.Tag != null)
-                    {
-                        child.Text = child.Tag.ToString();
-                    }
-                }
+                treePath.Nodes[0].Text = selectedNode.ToString();
             }
 
             lblStatus.Text = "Idle";
@@ -428,41 +415,9 @@ namespace FFVIIHighwind
                         }
                     }
 
-                    //If it is safe, would it be advantageous to roll the dice for another value?
                     if (valueIsSafe)
                     {
-                        //MAKE MODS BELOW
-                        //Calculate a heuristic value for the node in question
-                        //double value = (current.MaxPath.Resets - tempCurrent.MaxPath.Resets) + (current.MinPath.Resets - tempCurrent.MinPath.Resets);
-                        double value = (chosenPath.Child.MinPath.Resets + chosenPath.Child.MaxPath.Resets) / 2;
-
-                        //Prob is the number of times out of 256 that this will hit, (256 / x) - 1 represents the probable number of resets needed to hit this
-                        //value -= ((256.0 / chosenPath.Prob) - 1);
-
-                        //Loop thru all possible safe values and compare heuristic values, tally up the probability of a better value hitting
-                        int prob = 0, countBetter = 0;
-                        double magicCalc = 1, amountGain = 0; //magicCalc is an attempt to combine the probability and amount of gained benefit from switching
-                        foreach (NodeLink link in current.ChildNodes)
-                        {
-                            double diffMax = current.MaxPath.Resets - link.Child.MaxPath.Resets, diffMin = current.MinPath.Resets - link.Child.MinPath.Resets;
-                            if (((link.Child.MinPath.Resets + link.Child.MaxPath.Resets) / 2) + ((256.0 / link.Prob) - 1) < value)
-                            {
-                                countBetter++;
-                                prob += link.Prob;
-                                amountGain += ((value - ((link.Child.MinPath.Resets + link.Child.MaxPath.Resets) / 2)) - ((256.0 / link.Prob) - 1));
-                                //magicCalc *= ((value - link.Child.MinPath.Resets) * (link.Prob / 256.0));
-                                break;
-                            }
-                        }
-
-                        magicCalc = (amountGain / countBetter) * (prob / 256.0);
-
-                        //this is the condition that will force the routine to try for a new value at the same level
-                        if (magicCalc > 3.0)
-                        //MAKE MODS ABOVE
-                        {
-                            valueIsSafe = false;
-                        }
+                        valueIsSafe = chosenPath.Quality == Quality.Good;
                     }
 
                     if (!valueIsSafe)
