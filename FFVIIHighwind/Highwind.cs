@@ -16,6 +16,8 @@ namespace FFVIIHighwind
     {
         private Controller c;
 
+        ToolTip nodeTip = new ToolTip();
+
         public MainForm()
         {
             InitializeComponent();
@@ -417,7 +419,15 @@ namespace FFVIIHighwind
 
                     if (valueIsSafe)
                     {
-                        valueIsSafe = chosenPath.Quality == Quality.Good;
+                        switch (chosenPath.Quality)
+                        {
+                            case Quality.Bad:
+                                valueIsSafe = false;
+                                break;
+                            case Quality.Questionable:
+                                valueIsSafe = countResetsLevel < chosenPath.ResetTolerance;
+                                break;
+                        }
                     }
 
                     if (!valueIsSafe)
@@ -542,6 +552,39 @@ namespace FFVIIHighwind
             //MessageBox.Show(output);
 
             return countResets;
+        }
+
+        private void treePath_NodeMouseHover(object sender, TreeNodeMouseHoverEventArgs e)
+        {
+            if (e.Node.Tag is NodeLink)
+            {
+                NodeLink link = (NodeLink)e.Node.Tag;
+                if (link.Quality == Quality.Questionable)
+                {
+                    nodeTip.Show(String.Format("Consider accepting value ONLY if you've reset less than {0:0.00} times, green is ALWAYS recommended", link.ResetTolerance), this, PointToClient(MousePosition));
+                }
+                else
+                {
+                    nodeTip.Hide(this);
+                }
+            }
+            else
+            {
+                nodeTip.Hide(this);
+            }
+        }
+
+        private void treePath_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (treePath.GetNodeAt(treePath.PointToClient(MousePosition)) == null)
+            {
+                nodeTip.Hide(this);
+            }
+        }
+
+        private void treePath_MouseLeave(object sender, EventArgs e)
+        {
+            nodeTip.Hide(this);
         }
     }
 }

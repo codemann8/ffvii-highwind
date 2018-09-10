@@ -14,6 +14,8 @@ namespace FFVIIHighwind.Objects
 
         public Quality Quality;
 
+        public double ResetTolerance;
+
         public NodeLink(Node parent, Node child, byte hprng, byte mprng, byte prob)
         {
             Parent = parent;

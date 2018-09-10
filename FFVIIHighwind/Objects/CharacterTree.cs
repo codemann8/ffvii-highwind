@@ -514,7 +514,7 @@ namespace FFVIIHighwind.Objects
                             if (prob != link.Prob)
                             {
                                 double resetsWithoutThisLink = ((entry.Value.SmartResets - ((256.0 / prob) - 1)) - ((link.Prob * link.Child.SmartResets) / (double)prob)) / ((prob - link.Prob) / (double)prob) + ((256.0 / (prob - link.Prob)) - 1);
-                                if (resetsWithoutThisLink + 3 < entry.Value.SmartResets)
+                                if (resetsWithoutThisLink < entry.Value.SmartResets)
                                 {
                                     children.Remove(link);
                                     link.Quality = Quality.Bad;
@@ -528,31 +528,22 @@ namespace FFVIIHighwind.Objects
                     }
                     while (isChanged);
 
-                    do
-                    {
-                        isChanged = false;
-                        foreach (NodeLink link in children.ToList())
-                        {
-                            if (prob != link.Prob)
-                            {
-                                double resetsWithoutThisLink = ((entry.Value.SmartResets - ((256.0 / prob) - 1)) - ((link.Prob * link.Child.SmartResets) / (double)prob)) / ((prob - link.Prob) / (double)prob) + ((256.0 / (prob - link.Prob)) - 1);
-                                if (resetsWithoutThisLink < entry.Value.SmartResets)
-                                {
-                                    children.Remove(link);
-                                    link.Quality = Quality.Questionable;
-                                    entry.Value.SmartResets = resetsWithoutThisLink;
-                                    prob -= link.Prob;
-
-                                    isChanged = true;
-                                }
-                            }
-                        }
-                    }
-                    while (isChanged);
-
                     foreach (NodeLink link in children.ToList())
                     {
                         link.Quality = Quality.Good;
+                    }
+
+                    foreach (NodeLink link in entry.Value.ChildNodes)
+                    {
+                        if (link.Quality != Quality.Good)
+                        {
+                            double greenEstimatedResets = 256.0 / prob - 1;
+                            if (link.Child.SmartResets - entry.Value.SmartResets < greenEstimatedResets)
+                            {
+                                link.Quality = Quality.Questionable;
+                                link.ResetTolerance = greenEstimatedResets - (link.Child.SmartResets - entry.Value.SmartResets);
+                            }
+                        }
                     }
                 }
             }

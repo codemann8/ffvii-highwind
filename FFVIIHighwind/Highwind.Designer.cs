@@ -73,6 +73,9 @@
             this.treePath.Size = new System.Drawing.Size(884, 697);
             this.treePath.TabIndex = 9;
             this.treePath.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.treePath_BeforeExpand);
+            this.treePath.NodeMouseHover += new System.Windows.Forms.TreeNodeMouseHoverEventHandler(this.treePath_NodeMouseHover);
+            this.treePath.MouseLeave += new System.EventHandler(this.treePath_MouseLeave);
+            this.treePath.MouseMove += new System.Windows.Forms.MouseEventHandler(this.treePath_MouseMove);
             // 
             // grpCharacters
             // 
